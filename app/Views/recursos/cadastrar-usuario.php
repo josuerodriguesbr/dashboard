@@ -229,7 +229,6 @@ $content = '
 ';
 
 // ✅ Script JS específico desta página
-// ✅ Script JS específico desta página
 $inline_js = "
     document.getElementById('formCadastroUsuario').addEventListener('submit', async (e) => {
         e.preventDefault();

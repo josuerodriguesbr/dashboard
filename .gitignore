@@ -1,10 +1,13 @@
 # Arquivos de sistema
 .DS_Store
 Thumbs.db
+jwt-demo-cookie.php
+jwt-demo-localstorage.php
 
 # Pastas de dependências (composer, node, etc)
 vendor/
 node_modules/
+materiais/
 
 # Arquivos de ambiente
 .env
