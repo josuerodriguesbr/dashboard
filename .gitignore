@@ -1,0 +1,28 @@
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Pastas de dependências (composer, node, etc)
+vendor/
+node_modules/
+
+# Arquivos de ambiente
+.env
+.env.local
+
+# Logs e cache
+*.log
+storage/logs/*
+bootstrap/cache/*
+
+# Arquivos do sistema LAMPP/XAMPP (se aplicável)
+*.sock
+*.pid
+
+# Pastas temporárias
+tmp/
+temp/
+
+# Arquivos de IDE (opcional)
+.vscode/
+.idea/
