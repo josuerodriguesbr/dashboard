@@ -1,4 +1,5 @@
 <?php
+// /app/Controllers/DashboardController.php
 namespace App\Controllers;
 
 use Exception; // Adicionar esta linha
@@ -58,35 +59,41 @@ class DashboardController
     
     public function serverLogs()
     {
-        return $this->view('server-logs');
+        try {
+            $usuario = \App\Middleware\AuthMiddleware::verificar();
+            // Retorna apenas o conteúdo, sem layout
+            view('admin/server-logs');
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo "<p>Acesso negado</p>";
+            exit;
+        }
     }    
 
     public function dbMonitor()
     {
-        return $this->view('db-monitor');
+        try {
+            $usuario = \App\Middleware\AuthMiddleware::verificar();
+            view('admin/db-monitor');
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo "Acesso negado";
+            exit;
+        }
     }
 
     public function frontend()
     {
-        return $this->view('frontend');
-    }
-
-    protected function view($name, $data = [])
-    {
-        $file = ROOT . 'app/Views/' . $name . '.php';
-        if (file_exists($file)) {
-            // ✅ Define o tipo de conteúdo
-            header('Content-Type: text/html; charset=utf-8');
-            extract($data);
-            include $file;
-            exit; // Finaliza a execução
+        try {
+            $usuario = \App\Middleware\AuthMiddleware::verificar();
+            view('admin/frontend');
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo "Acesso negado";
+            exit;
         }
-
-        http_response_code(500);
-        header('Content-Type: text/plain; charset=utf-8');
-        echo "View X não encontrada: $file";
-        exit;
     }
+
     public function cadastrarUsuario()
     {
         $input = json_decode(file_get_contents('php://input'), true);
@@ -108,6 +115,15 @@ class DashboardController
             if (!$resultadoSessao) {
                 throw new Exception("Falha ao criar sessão");
             }
+
+            // DEFINIR O COOKIE AQUI
+            setcookie('authToken', $resultadoSessao['token'], [
+                'expires' => time() + (JWT_EXPIRE ?? 3600 * 24 * 7),
+                'path' => '/projetos/dashboard/',
+                'secure' => false,
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ]);            
 
             \App\Models\Log::registrar(
                 $usuarioId,

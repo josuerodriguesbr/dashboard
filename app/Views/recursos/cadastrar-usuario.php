@@ -1,39 +1,5 @@
-<!-- /app/Views/recursos/cadastrar-usuario.php -->
 <?php
-
-// ...
-// Trecho do código que lida com a requisição POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'login') {
-    header('Content-Type: application/json');
-    $nome = $_POST['nome'] ?? '';
-    $senha = $_POST['senha'] ?? '';
-    $foundUser = null;
-
-    // Lógica de encontrar/criar usuário
-    // ...
-
-    if ($foundUser) {
-        $jwt = jwt_encode($foundUser);
-        $cookie_expiration = time() + (20 * 60); // 20 minutos
-        
-        // Aqui é o local ideal para definir o cookie
-        setcookie('authToken', $jwt, [
-            'expires' => $cookie_expiration,
-            'path' => '/projetos/dashboard/', 
-            'secure' => false, 
-            'httponly' => true, 
-            'samesite' => 'Lax'
-        ]);
-        
-        // Apenas informa ao JS que o login foi um sucesso
-        echo json_encode(['success' => true]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Nome ou senha inválidos.']);
-    }
-    exit;
-}
-// ...
-
+// /app/Views/recursos/cadastrar-usuario.php
 
 $title = 'Cadastrar Usuário';
 

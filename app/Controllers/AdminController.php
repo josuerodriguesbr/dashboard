@@ -7,36 +7,18 @@ use App\Middleware\PermissionMiddleware;
 
 class AdminController
 {
+
     public function dashboard()
     {
-        // Verificar se há token antes de tentar verificar permissões
-        $headers = apache_request_headers();
-        $authHeader = $headers['Authorization'] ?? null;
-        
-        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            // Redireciona para a página inicial se não houver token válido
-            header('Location: /projetos/dashboard/');
-            exit;
-        }
-        
         try {
-            // Verificar autenticação e nível de permissão
+            // Verifica autenticação e permissões
             $usuario = PermissionMiddleware::verificarNivel('admin');
             
-            // Lógica específica do admin
-            $totalUsuarios = $this->getTotalUsuarios();
-            $ultimosLogs = \App\Models\Log::listar(10);
+            // Carrega a view completa do dashboard
+            view('admin/dashboard');
             
-            $dados = [
-                'usuario' => $usuario,
-                'totalUsuarios' => $totalUsuarios,
-                'ultimosLogs' => $ultimosLogs
-            ];
-            
-            return $this->view('admin/dashboard', $dados);
         } catch (\Exception $e) {
-            error_log("Erro no AdminController: " . $e->getMessage());
-            // Redireciona para a página inicial em caso de erro de autenticação
+            // Redireciona para a página inicial se não tiver permissão
             header('Location: /projetos/dashboard/');
             exit;
         }
@@ -61,6 +43,7 @@ class AdminController
         }
     }
     
+    /*
     protected function view($name, $data = [])
     {
         $file = ROOT . 'app/Views/' . $name . '.php';
@@ -72,4 +55,6 @@ class AdminController
         }
         return "View não encontrada: $file";
     }
+        */
+        
 }

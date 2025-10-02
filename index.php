@@ -57,7 +57,7 @@ $url = $_GET['url'] ?? '';
 $base = dirname($_SERVER['SCRIPT_NAME']);
 $base = ($base == '/' || $base == '\\') ? '' : $base;
 
-if ($base && str_starts_with($url, $base)) {
+if ($base && strncmp($url, $base, strlen($base)) === 0) {
     $url = substr($url, strlen($base));
 }
 $url = ltrim($url, '/');

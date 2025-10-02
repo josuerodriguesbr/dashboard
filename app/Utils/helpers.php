@@ -40,10 +40,10 @@ if (!function_exists('view')) {
             header('Content-Type: text/html; charset=utf-8');
             extract($data);
             include $file;
-            //exit;
+            exit;
         }
         http_response_code(500);
-        echo "View não encontrada: $file";
+        echo "View X não encontrada: $file";
         exit;
     }
 }

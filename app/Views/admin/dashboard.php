@@ -1,40 +1,37 @@
 <?php
+// app/Views/admin/dashboard.php
+
 $content = '
     <div class="row">
-        <div class="col"><div id="server-logs"></div></div>
-        <div class="col"><div id="db-monitor"></div></div>
-        <div class="col"><div id="frontend"></div></div>
+        <div class="col">
+            <iframe src="/projetos/dashboard/server-logs" class="frame" id="server-logs-frame"></iframe>
+        </div>
+        <div class="col">
+            <iframe src="/projetos/dashboard/db-monitor" class="frame" id="db-monitor-frame"></iframe>
+        </div>
+        <div class="col">
+            <iframe src="/projetos/dashboard/frontend" class="frame" id="frontend-frame"></iframe>
+        </div>
     </div>
 ';
 
 $title = 'Dashboard Admin';
 
 $inline_js = "
-    // O JavaScript não precisa mais manipular o token, pois o navegador o envia automaticamente.
-    // As linhas a seguir foram removidas por serem incorretas e inseguras:
-    // const token = localStorage.getItem('authToken');
-    // const token = document.cookie = 'authToken=' + token + '; path=/';
-
-    // A lógica de verificação deve ser feita no PHP antes de renderizar a página.
-    // O backend já deve ter verificado o cookie e redirecionado o usuário se ele não for válido.
-
     const rotas = ['server-logs', 'db-monitor', 'frontend'];
     
     rotas.forEach(rota => {
         fetch('/projetos/dashboard/' + rota, {
-            method: 'GET'
-            // Não é necessário o cabeçalho 'Authorization'. O navegador enviará o cookie automaticamente.
+            method: 'GET',
+            credentials: 'same-origin' // Garante que cookies são enviados
         })
         .then(response => {
-            // Se o servidor negar o acesso (e.g., status 401), redirecione para o login.
             if (response.status === 401 || response.status === 403) {
-                console.error('❌ Acesso negado. Redirecionando...');
-                window.location.href = '/projetos/dashboard/';
-                // A throw new Error garante que o código não continue.
+                console.error('❌ Acesso negado para: ' + rota);
                 throw new Error('Acesso negado');
             }
             if (!response.ok) {
-                throw new Error('Erro ao carregar os dados.');
+                throw new Error('Erro ao carregar ' + rota + ': ' + response.status);
             }
             return response.text();
         })
@@ -47,10 +44,14 @@ $inline_js = "
         })
         .catch(err => {
             console.error('Erro ao carregar:', rota, err);
-            // Redireciona em caso de erro de rede ou qualquer outro erro na requisição.
-            window.location.href = '/projetos/dashboard/';
+            const id = rota.replace('-', '');
+            const container = document.getElementById(id);
+            if (container) {
+                container.innerHTML = '<p>Erro ao carregar conteúdo</p>';
+            }
         });
     });
 ";
 
+// Inclui o layout diretamente aqui
 include ROOT . 'app/Views/layout.php';
