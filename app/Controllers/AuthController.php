@@ -9,62 +9,79 @@ class AuthController
 {
     public function login()
     {
+        // Garantir que a resposta seja JSON
+        header('Content-Type: application/json; charset=utf-8');
+        
         $input = json_decode(file_get_contents('php://input'), true);
         
         $email = $input['email'] ?? '';
+        $senha = $input['senha'] ?? '';
         
-        if (empty($email)) {
-            echo json_encode(['success' => false, 'message' => 'E-mail é obrigatório']);
+        if (empty($email) || empty($senha)) {
+            echo json_encode(['success' => false, 'message' => 'E-mail e senha são obrigatórios']);
             exit;
         }
         
-        // Verificar se o usuário existe
-        $usuario = Usuario::buscarPorEmail($email);
+        // Usar o método login do model Usuario que verifica senha
+        $resultado = Usuario::login($email, $senha);
         
-        if ($usuario) {
-            // Usuário existe, criar sessão
-            $userData = [
-                'id' => $usuario['id'],
-                'nome' => $usuario['nome'],
-                'email' => $usuario['email'],
-                'nivel' => $usuario['nivel']
-            ];
-            
-            $sessionData = \App\Utils\JWT::createSession($usuario['id'], $userData);
+        if ($resultado['success']) {
+            // Criar uma nova sessão para o usuário autenticado
+            $sessionData = \App\Utils\JWT::createSession(
+                $resultado['usuario']['id'],
+                $resultado['usuario'],
+                2 // 2 minutos
+            );
             
             if ($sessionData) {
+                // Definir o cookie com a nova sessão
+                setcookie('authToken', $sessionData['token'], [
+                    'expires' => time() + (2 * 60), // 2 minutos
+                    'path' => '/projetos/dashboard/',
+                    'secure' => false,
+                    'httponly' => true,
+                    'samesite' => 'Lax'
+                ]);
+                
                 echo json_encode([
                     'success' => true,
                     'token' => $sessionData['token'],
-                    'usuario' => $userData,
-                    'redirect' => $this->getRedirectPage($usuario['nivel'])
+                    'usuario' => $resultado['usuario'],
+                    'redirect' => $this->getRedirectPage($resultado['usuario']['nivel'])
                 ]);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Erro ao criar sessão']);
             }
         } else {
-            echo json_encode(['success' => false, 'message' => 'Usuário não encontrado. Por favor, cadastre-se primeiro.']);
+            echo json_encode([
+                'success' => false, 
+                'message' => $resultado['message']
+            ]);
         }
         exit;
     }
     
     private function getRedirectPage($nivel)
     {
+        $basePath = '/projetos/dashboard';
+
         switch ($nivel) {
             case 'admin':
-                return '/admin';
+                return $basePath . '/admin';
             case 'assinante':
-                return '/assinante';
+                return $basePath . '/assinante';
             case 'vendedor':
-                return '/vendedor';
+                return $basePath . '/vendedor';
             case 'cliente':
             default:
-                return '/cliente';
+                return $basePath . '/cliente';
         }
     }
     
     public function logout()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        
         $headers = apache_request_headers();
         $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : null;
         
@@ -73,6 +90,11 @@ class AuthController
             \App\Models\Sessao::desativarPorToken($token);
         }
         
+        // Limpar o cookie de autenticação
+        setcookie('authToken', '', time() - 3600, '/projetos/dashboard/');
+        
+        // Retornar resposta de sucesso
+        header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['success' => true, 'message' => 'Logout realizado com sucesso']);
         exit;
     }

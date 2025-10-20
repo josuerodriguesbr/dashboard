@@ -16,12 +16,14 @@ $router = new Router();
 
 // Rotas públicas
 $router->get('/', [DashboardController::class, 'paginaInicial']);
+$router->get('/cadastro-usuario', [DashboardController::class, 'mostraCadastroUsuario']);
 $router->get('/logs', [DashboardController::class, 'logs']);
 $router->get('/server-logs', [DashboardController::class, 'serverLogs']);
 $router->get('/db-monitor', [DashboardController::class, 'dbMonitor']);
 $router->get('/frontend', [DashboardController::class, 'frontend']);
 $router->post('/webhook/asaas', [WebhookController::class, 'handleAsaas']);
-$router->post('/cadastrar-usuario', [DashboardController::class, 'cadastrarUsuario']);
+
+$router->post('/cadastro-usuario', [DashboardController::class, 'cadastroUsuario']);
 
 // Rotas de autenticação
 $router->post('/login', [AuthController::class, 'login']);

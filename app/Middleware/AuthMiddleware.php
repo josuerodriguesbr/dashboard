@@ -6,27 +6,36 @@ use Exception;
 
 class AuthMiddleware
 {
-    public static function verificar()
-    {
-        // Change: Check for the token in the $_COOKIE superglobal.
-        // It's no longer expected in the Authorization header.
-        if (!isset($_COOKIE['authToken'])) {
-            throw new Exception('Token não fornecido');
-        }
-
-        $token = $_COOKIE['authToken'];
-
-        try {
-            // ✅ Usa o JWT para validar sessão e token
-            $resultado = \App\Utils\JWT::verifySession($token);
-            return $resultado['payload']; // retorna os dados do usuário (userId, nivel, etc)
-        } catch (Exception $e) {
-            // It's a good practice to also clear the cookie if the token is invalid.
-            // This prevents the user from being stuck in a loop.
-            setcookie('authToken', '', time() - 3600, '/');
-            throw new Exception('Autenticação falhou: ' . $e->getMessage());
-        }
+public static function verificar()
+{
+    // Change: Check for the token in the $_COOKIE superglobal.
+    // It's no longer expected in the Authorization header.
+    if (!isset($_COOKIE['authToken'])) {
+        throw new Exception('Token não fornecido');
     }
+
+    $token = $_COOKIE['authToken'];
+
+    if (empty($token)) {
+        throw new Exception('Token vazio');
+    }
+
+    try {
+        // ✅ Usa o JWT para validar sessão e token
+        $resultado = \App\Utils\JWT::verifySession($token);
+        
+        if (!$resultado || !isset($resultado['payload'])) {
+            throw new Exception('Token inválido ou sessão expirada');
+        }
+        
+        return $resultado['payload']; // retorna os dados do usuário (userId, nivel, etc)
+    } catch (Exception $e) {
+        // It's a good practice to also clear the cookie if the token is invalid.
+        // This prevents the user from being stuck in a loop.
+        setcookie('authToken', '', time() - 3600, '/projetos/dashboard/');
+        throw new Exception('Autenticação falhou: ' . $e->getMessage());
+    }
+}
 
     public static function verificarEInjetar(&$router)
     {
@@ -38,4 +47,14 @@ class AuthMiddleware
             exit;
         }
     }
+
+    // Novo método para verificar e retornar usuário ou false
+    public static function verificarOuFalse()
+    {
+        try {
+            return self::verificar();
+        } catch (Exception $e) {
+            return false;
+        }
+    }    
 }

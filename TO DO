@@ -1,11 +1,2 @@
-1. No dashboardController.php 
-    try {
-    \App\Models\Log::registrar($usuarioId, 'Usuário cadastrado', "Nome: $nome");
-    } catch (Exception $e) {
-    error_log("Log não registrado: " . $e->getMessage());
-    }
 
-    O $usuarioId tem que ser o id do usuários que está executando a ação e não de um usuários que está sendo criado. 
-    Pode até ser registrado o id do usuário que está sendo criado, mas o id do usuário que está executando a ação 
-    deve ser o id do usuário logado.
 

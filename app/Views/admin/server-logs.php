@@ -1,3 +1,8 @@
+<!-- app/Views/admin/server-logs.php -->
+<?php
+// server-logs.php
+$semLayout = true; // Impede que o layout seja renderizado
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -78,7 +83,7 @@
         }
 
         // Ordena do mais novo para o mais antigo
-        //logs.reverse();
+        logs.reverse();
 
         container.innerHTML = logs.map(log => {
           const data = new Date(log.createdAt).toLocaleString('pt-BR');

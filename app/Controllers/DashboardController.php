@@ -11,43 +11,48 @@ use App\Utils\JWT;
 class DashboardController
 {  
     // Método para mostrar o formulário de cadastro
-    public function mostrarFormularioCadastro()
+    public function mostraCadastroUsuario()
     {
-        $this->view('recursos/cadastrar-usuario');
+        $data = [
+            'title' => 'Cadastro de usuário',
+            'semLayout' => true
+        ]; 
+        view('recursos/usuarios/cadastro-usuario.php', $data);
     }
 
-/*    public function paginaInicial()
-    {
-        try {
-            $usuario = \App\Middleware\AuthMiddleware::verificar();
+public function paginaInicial()
+{
+    // Verificar se o usuário já está autenticado
+    try {
+        $usuario = \App\Middleware\AuthMiddleware::verificar();
+        // Se estiver autenticado, redirecionar diretamente para o dashboard
+        $this->redirecionarParaDashboard($usuario['nivel']);
+        return;
+    } catch (Exception $e) {
+        // Usuário não autenticado, mostrar página de login
+        $data = [
+            'title' => 'Login',
+            'semLayout' => true
+        ];    
 
-            switch ($usuario['nivel']) {
-                case 'admin':
-                    redirect('/admin');
-                    break;
-                case 'assinante':
-                    redirect('/assinante');
-                    break;
-                case 'vendedor':
-                    redirect('/vendedor');
-                    break;
-                default:
-                    redirect('/cliente');
-                    break;
-            }
-        } catch (Exception $e) {
-            view('recursos/cadastrar-usuario'); // mostra o formulário
-        }
+        view('recursos/usuarios/login', $data);
     }
-    */
+}
 
-    public function paginaInicial()
-    {
-        // ✅ Apenas mostra o formulário
-        // A decisão de redirecionar fica com o frontend (layout.php)
-        view('recursos/cadastrar-usuario');
-
-    }
+private function redirecionarParaDashboard($nivel)
+{
+    $basePath = '/projetos/dashboard';
+    $rotas = [
+        'admin' => $basePath . '/admin',
+        'assinante' => $basePath . '/assinante',
+        'vendedor' => $basePath . '/vendedor',
+        'cliente' => $basePath . '/cliente'
+    ];
+    
+    $redirectUrl = $rotas[$nivel] ?? $rotas['cliente'];
+    header("Location: $redirectUrl");
+    exit;
+}
 
     public function logs()
     {
@@ -59,10 +64,16 @@ class DashboardController
     
     public function serverLogs()
     {
+        $data = [
+            'title' => 'Logs do Servidor',
+            'semLayout' => true
+        ];        
         try {
             $usuario = \App\Middleware\AuthMiddleware::verificar();
+
             // Retorna apenas o conteúdo, sem layout
-            view('admin/server-logs');
+            view('admin/server-logs', $data);
+
         } catch (Exception $e) {
             http_response_code(401);
             echo "<p>Acesso negado</p>";
@@ -72,9 +83,13 @@ class DashboardController
 
     public function dbMonitor()
     {
+        $data = [
+            'title' => 'Dado do DB',
+            'semLayout' => true
+        ];        
         try {
             $usuario = \App\Middleware\AuthMiddleware::verificar();
-            view('admin/db-monitor');
+            view('admin/db-monitor', $data);
         } catch (Exception $e) {
             http_response_code(401);
             echo "Acesso negado";
@@ -84,9 +99,15 @@ class DashboardController
 
     public function frontend()
     {
+        $data = [
+            'title' => 'Playground de Integração',
+            'semLayout' => true
+        ];         
         try {
+
             $usuario = \App\Middleware\AuthMiddleware::verificar();
-            view('admin/frontend');
+            view('admin/frontend', $data);
+
         } catch (Exception $e) {
             http_response_code(401);
             echo "Acesso negado";
@@ -94,7 +115,7 @@ class DashboardController
         }
     }
 
-    public function cadastrarUsuario()
+    public function cadastroUsuario()
     {
         $input = json_decode(file_get_contents('php://input'), true);
 
@@ -118,7 +139,8 @@ class DashboardController
 
             // DEFINIR O COOKIE AQUI
             setcookie('authToken', $resultadoSessao['token'], [
-                'expires' => time() + (JWT_EXPIRE ?? 3600 * 24 * 7),
+                //'expires' => time() + (JWT_EXPIRE ?? 3600 * 24 * 7),
+                'expires' => time() + (2 * 60), // 2 minutos
                 'path' => '/projetos/dashboard/',
                 'secure' => false,
                 'httponly' => true,
@@ -147,19 +169,5 @@ class DashboardController
             json_response(['success' => false, 'message' => $e->getMessage()], 400);
         }
     }
-    public function logout()
-    {
-        $headers = apache_request_headers();
-        $authHeader = $headers['Authorization'] ?? null;
-
-        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $token = $matches[1];
-            \App\Models\Sessao::desativarPorToken($token);
-        }
-
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['success' => true, 'message' => 'Logout realizado com sucesso']);
-        exit;
-    }    
 
 }

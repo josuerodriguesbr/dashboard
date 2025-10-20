@@ -7,15 +7,21 @@ use App\Middleware\PermissionMiddleware;
 
 class AdminController
 {
-
     public function dashboard()
     {
         try {
             // Verifica autenticação e permissões
             $usuario = PermissionMiddleware::verificarNivel('admin');
             
+            // Dados a serem passados para a view
+            $data = [
+                'title' => 'Painel Administrativo',
+                'usuario' => $usuario,
+                'semLayout' => true
+            ];
+            
             // Carrega a view completa do dashboard
-            view('admin/dashboard');
+            view('admin/dashboard', $data);
             
         } catch (\Exception $e) {
             // Redireciona para a página inicial se não tiver permissão
@@ -42,19 +48,4 @@ class AdminController
             return 0;
         }
     }
-    
-    /*
-    protected function view($name, $data = [])
-    {
-        $file = ROOT . 'app/Views/' . $name . '.php';
-        if (file_exists($file)) {
-            ob_start();
-            extract($data);
-            include $file;
-            return ob_get_clean();
-        }
-        return "View não encontrada: $file";
-    }
-        */
-        
 }

@@ -46,6 +46,7 @@ class Usuario
         }
     }
 
+    // In the cadastrar method (around line 45)
     public static function cadastrar($dados)
     {
         $pdo = \App\Config\Database::getConnection();
@@ -53,12 +54,13 @@ class Usuario
         $nome = trim($dados['nome'] ?? '');
         $nivel = trim($dados['nivel'] ?? '');
         $email = trim($dados['email'] ?? '');
+        $senha = trim($dados['senha'] ?? ''); // This is the plain text password
         $cpf = trim($dados['cpf'] ?? '');
         $telefone = trim($dados['telefone'] ?? '');
 
         // Validação básica
-        if (empty($nome) || empty($email)) {
-            throw new \Exception('Nome e e-mail são obrigatórios.');
+        if (empty($nome) || empty($email) || empty($senha)) {
+            throw new \Exception('Nome, e-mail e senha são obrigatórios.');
         }
 
         try {
@@ -67,11 +69,14 @@ class Usuario
                 throw new \Exception('E-mail já cadastrado.');
             }
 
+            // Hash the password before storing
+            $senha_hashed = password_hash($senha, PASSWORD_DEFAULT);
+
             $stmt = $pdo->prepare("
-                INSERT INTO integra_usuarios (nome, nivel, email, cpf, telefone)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO integra_usuarios (nome, nivel, email, senha, cpf, telefone)
+                VALUES (?, ?, ?, ?, ?, ?)
             ");
-            $stmt->execute([$nome, $nivel, $email, $cpf, $telefone]);
+            $stmt->execute([$nome, $nivel, $email, $senha_hashed, $cpf, $telefone]);
 
             return $pdo->lastInsertId();
         } catch (\Exception $e) {
@@ -90,7 +95,7 @@ class Usuario
             
             foreach ($dados as $campo => $valor) {
                 // Permite atualizar apenas campos específicos
-                if (in_array($campo, ['nome', 'nivel', 'email', 'cpf', 'telefone'])) {
+                if (in_array($campo, ['nome', 'nivel', 'email', 'senha', 'cpf', 'telefone'])) {
                     $sets[] = "$campo = ?";
                     $valores[] = $valor;
                 }
@@ -124,38 +129,43 @@ class Usuario
         }
     }
 
-    // Atualização no app/Models/Usuario.php
     public static function login($email, $senha)
     {
         $pdo = \App\Config\Database::getConnection();
         
         try {
-            $stmt = $pdo->prepare("SELECT id, nome, email, nivel FROM integra_usuarios WHERE email = ?");
+            // Include senha field in the query
+            $stmt = $pdo->prepare("SELECT id, nome, email, nivel, senha FROM integra_usuarios WHERE email = ?");
             $stmt->execute([$email]);
             $usuario = $stmt->fetch();
             
             if ($usuario) {
-                // Aqui você pode adicionar verificação de senha se tiver uma coluna de senha
-                // Por enquanto, vamos apenas verificar se o usuário existe
-                
-                // Gera o token JWT e cria a sessão
-                $userData = [
-                    'id' => $usuario['id'],
-                    'nome' => $usuario['nome'],
-                    'email' => $usuario['email'],
-                    'nivel' => $usuario['nivel']
-                ];
-                
-                $sessionData = \App\Utils\JWT::createSession($usuario['id'], $userData);
-                
-                if ($sessionData) {
-                    return [
-                        'success' => true,
-                        'token' => $sessionData['token'],
-                        'usuario' => $userData
+                // Verify password (assuming passwords are stored hashed)
+                if (password_verify($senha, $usuario['senha'])) {
+                    // Remove password from user data before creating session
+                    unset($usuario['senha']);
+                    
+                    // Gera o token JWT e cria a sessão
+                    $userData = [
+                        'id' => $usuario['id'],
+                        'nome' => $usuario['nome'],
+                        'email' => $usuario['email'],
+                        'nivel' => $usuario['nivel']
                     ];
+                    
+                    $sessionData = \App\Utils\JWT::createSession($usuario['id'], $userData);
+                    
+                    if ($sessionData) {
+                        return [
+                            'success' => true,
+                            'token' => $sessionData['token'],
+                            'usuario' => $userData
+                        ];
+                    } else {
+                        return ['success' => false, 'message' => 'Erro ao criar sessão'];
+                    }
                 } else {
-                    return ['success' => false, 'message' => 'Erro ao criar sessão'];
+                    return ['success' => false, 'message' => 'Credenciais inválidas'];
                 }
             } else {
                 return ['success' => false, 'message' => 'Credenciais inválidas'];

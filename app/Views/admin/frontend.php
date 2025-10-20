@@ -63,12 +63,6 @@
             onload="this.style.display='block'; this.previousElementSibling.textContent='';">
     </iframe>
 
-    <!-- Seção: Cadastrar Usuário -->
-    <div class="carregando">Carregando...</div>
-    <iframe src="app/Views/recursos/cadastrar-usuario.php" title="Cadastrar Usuário"
-            onload="this.style.display='block'; this.previousElementSibling.textContent='';">
-    </iframe>
-
   </div>
 </body>
 </html>
