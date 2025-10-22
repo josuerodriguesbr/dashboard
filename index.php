@@ -17,6 +17,7 @@ $router = new Router();
 // Rotas públicas
 $router->get('/', [DashboardController::class, 'paginaInicial']);
 $router->get('/cadastro-usuario', [DashboardController::class, 'mostraCadastroUsuario']);
+$router->get('/perfil', [DashboardController::class, 'mostraPerfilUsuario']); // Nova rota
 $router->get('/logs', [DashboardController::class, 'logs']);
 $router->get('/server-logs', [DashboardController::class, 'serverLogs']);
 $router->get('/db-monitor', [DashboardController::class, 'dbMonitor']);
@@ -24,6 +25,8 @@ $router->get('/frontend', [DashboardController::class, 'frontend']);
 $router->post('/webhook/asaas', [WebhookController::class, 'handleAsaas']);
 
 $router->post('/cadastro-usuario', [DashboardController::class, 'cadastroUsuario']);
+$router->post('/atualiza-usuario', [DashboardController::class, 'atualizaUsuario']);
+$router->get('/perfil/carregar', [DashboardController::class, 'carregaPerfil']); // Nova rota
 
 // Rotas de autenticação
 $router->post('/login', [AuthController::class, 'login']);

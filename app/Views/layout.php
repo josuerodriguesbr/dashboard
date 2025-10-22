@@ -67,30 +67,75 @@
         }
         
         .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-name {
             font-size: 14px;
             opacity: 0.9;
         }
+        
+        .profile-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #3498db;
+            border-radius: 50%;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        .profile-link:hover {
+            background: #2980b9;
+        }
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.logo-link:hover {
+    color: #3498db;
+}        
     </style>
 </head>
 <body>
     <div class="container">
-        <header class="dashboard-header">
-            <div class="header-logo">
-                <div class="logo-icon">📊</div>
-                <div class="logo-text">Dashboard</div>
+
+<header class="dashboard-header">
+    <div class="header-logo">
+        <a href="#" class="logo-link">
+            <div class="logo-icon">📊</div>
+            <div class="logo-text">Dashboard</div>
+        </a>
+    </div>
+    
+    <div class="header-actions">
+        <?php if (isset($usuario) && $usuario): ?>
+            <div class="user-info">
+                <span class="user-name">
+                    <?= htmlspecialchars($usuario['nome'] ?? $usuario['name'] ?? 'Usuário') ?>
+                </span>
+                <a href="/projetos/dashboard/perfil" class="profile-link" title="Meu Perfil">
+                    👤
+                </a>
             </div>
-            
-            <div class="header-actions">
-                <?php if (isset($usuario) && $usuario): ?>
-                    <div class="user-info">
-                        <?= htmlspecialchars($usuario['nome'] ?? $usuario['name'] ?? 'Usuário') ?>
-                    </div>
-                    <button class="logout-btn" id="logoutBtn">
-                        Sair
-                    </button>
-                <?php endif; ?>
-            </div>
-        </header>
+            <button class="logout-btn" id="logoutBtn">
+                Sair
+            </button>
+        <?php endif; ?>
+    </div>
+</header>
 
         <?= $content ?>
 
@@ -129,6 +174,31 @@
             });
         }
     });
+
+    // Adicionar evento de clique ao logo para redirecionar ao dashboard
+    document.querySelector('.logo-link')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = determinarDashboardUrl();
+    });
+
+    // Passar informações do usuário para o JavaScript
+    window.usuario = {
+        nivel: '<?= $usuario['nivel'] ?? 'cliente' ?>',
+        nome: '<?= htmlspecialchars($usuario['nome'] ?? $usuario['name'] ?? 'Usuário') ?>'
+    };
+    
+    // Função para determinar a URL do dashboard com base no nível do usuário
+    function determinarDashboardUrl() {
+        const basePath = '/projetos/dashboard';
+        const rotas = {
+            'admin': basePath + '/admin',
+            'assinante': basePath + '/assinante',
+            'vendedor': basePath + '/vendedor',
+            'cliente': basePath + '/cliente'
+        };
+        
+        return rotas[window.usuario.nivel] || rotas['cliente'];
+    }    
 </script>
 
     <?php if (isset($page_js)): ?>

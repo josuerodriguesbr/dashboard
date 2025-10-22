@@ -85,36 +85,58 @@ class Usuario
         }
     }
 
-    public static function atualizar($id, $dados)
-    {
-        $pdo = \App\Config\Database::getConnection();
+public static function atualizar($id, $dados)
+{
+    $pdo = \App\Config\Database::getConnection();
+    
+    try {
+        // Primeiro verifica se o usuário existe
+        if (!self::buscarPorId($id)) {
+            throw new \Exception('Usuário não encontrado.');
+        }
         
-        try {
-            $sets = [];
-            $valores = [];
+        $sets = [];
+        $valores = [];
+        
+        foreach ($dados as $campo => $valor) {
+            // Permite atualizar apenas campos específicos
+            if (in_array($campo, ['nome', 'nivel', 'email', 'cpf', 'telefone'])) {
+                $sets[] = "$campo = ?";
+                $valores[] = $valor;
+            }
             
-            foreach ($dados as $campo => $valor) {
-                // Permite atualizar apenas campos específicos
-                if (in_array($campo, ['nome', 'nivel', 'email', 'senha', 'cpf', 'telefone'])) {
-                    $sets[] = "$campo = ?";
+            // Trata senha especialmente
+            if ($campo === 'senha' && !empty($valor)) {
+                $sets[] = "senha = ?";
+                // Faz hash da senha se não estiver criptografada
+                if (!password_get_info($valor)['algo']) {
+                    $valores[] = password_hash($valor, PASSWORD_DEFAULT);
+                } else {
                     $valores[] = $valor;
                 }
             }
-            
-            if (empty($sets)) {
-                throw new \Exception('Nenhum dado válido para atualizar.');
-            }
-            
-            $valores[] = $id;
-            
-            $sql = "UPDATE integra_usuarios SET " . implode(', ', $sets) . " WHERE id = ?";
-            $stmt = $pdo->prepare($sql);
-            return $stmt->execute($valores);
-        } catch (\Exception $e) {
-            error_log("Usuario::atualizar falhou: " . $e->getMessage());
-            throw $e;
         }
+        
+        if (empty($sets)) {
+            throw new \Exception('Nenhum dado válido para atualizar.');
+        }
+        
+        $valores[] = $id;
+        
+        $sql = "UPDATE integra_usuarios SET " . implode(', ', $sets) . " WHERE id = ?";
+        $stmt = $pdo->prepare($sql);
+        $result = $stmt->execute($valores);
+        
+        if ($stmt->rowCount() === 0) {
+            throw new \Exception('Nenhuma linha foi atualizada. Verifique se os dados são diferentes.');
+        }
+        
+        return $result;
+    } catch (\Exception $e) {
+        error_log("Usuario::atualizar falhou: " . $e->getMessage());
+        throw $e;
     }
+}
 
     public static function deletar($id)
     {
