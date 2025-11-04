@@ -36,7 +36,7 @@ class AuthController
             if ($sessionData) {
                 // Definir o cookie com a nova sessão
                 setcookie('authToken', $sessionData['token'], [
-                    'expires' => time() + (2 * 60), // 2 minutos
+                    'expires' => time() + JWT_EXPIRE,
                     'path' => '/projetos/dashboard/',
                     'secure' => false,
                     'httponly' => true,

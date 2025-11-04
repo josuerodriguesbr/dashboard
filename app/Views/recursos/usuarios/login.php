@@ -155,15 +155,18 @@
 </head>
 <body>
     <div class="container">
+
+    <!-- 
         <header class="dashboard-header">
             <div class="header-logo">
                 <div class="logo-icon">📊</div>
                 <div class="logo-text">Dashboard</div>
             </div>
             <div class="header-actions">
-                <!-- Espaço reservado para futuras ações -->
+                <!-- Espaço reservado para futuras ações 
             </div>
         </header>
+        -->
 
         <div class="login-container">
             <h2>Acesso ao Sistema</h2>
@@ -181,7 +184,7 @@
             </form>
             <div id="errorMessage" class="error-message"></div>
             <div class="register-link">
-                <a href="/projetos/dashboard/form-cadastro-usuario">Não tem conta? Cadastre-se</a>
+                <a href="/projetos/dashboard/cadastro-usuario">Não tem conta? Cadastre-se</a>
             </div>
         </div>
 

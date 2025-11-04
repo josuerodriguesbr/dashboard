@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title><?= $title ?? 'Dashboard' ?></title>
     
-    <!-- No app/Views/layout.php -->
+    <!-- CSS Files -->
     <link rel="stylesheet" href="/projetos/dashboard/public/css/main.css" />
     <?php if (isset($page_css)): ?>
         <link rel="stylesheet" href="<?= $page_css ?>" />
@@ -48,7 +48,6 @@
                 <aside class="sidebar-menu" id="sidebarMenu">
                     <h3 class="menu-title">Navegação</h3>
                     <ul class="menu-list">
-                        <!-- Itens do menu serão inseridos aqui dinamicamente -->
                         <?php renderMenuItems($usuario['nivel'] ?? 'cliente'); ?>
                     </ul>
                 </aside>

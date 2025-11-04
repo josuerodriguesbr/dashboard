@@ -1,22 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title><?= $title ?? 'Dashboard' ?></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= $title ?? 'Sistema' ?></title>
     
-    <!-- No app/Views/layout.php -->
-    <link rel="stylesheet" href="/projetos/dashboard/public/css/main.css" />
+    <link rel="stylesheet" href="/projetos/dashboard/public/css/main.css">
     <?php if (isset($page_css)): ?>
-        <link rel="stylesheet" href="<?= $page_css ?>" />
+        <link rel="stylesheet" href="<?= $page_css ?>">
     <?php endif; ?>
     
     <?php if (isset($inline_css)): ?>
         <style><?= $inline_css ?></style>
     <?php endif; ?>
-    
 </head>
-<body>
+<body class="minimal-body">
     <div class="container">
         <header class="dashboard-header">
             <div class="header-logo">
@@ -43,23 +41,9 @@
             </div>
         </header>
 
-        <div class="content-wrapper">
-            <?php if (isset($usuario) && $usuario): ?>
-                <aside class="sidebar-menu" id="sidebarMenu">
-                    <h3 class="menu-title">Navegação</h3>
-                    <ul class="menu-list">
-                        <!-- Itens do menu serão inseridos aqui dinamicamente -->
-                        <?php renderMenuItems($usuario['nivel'] ?? 'cliente'); ?>
-                    </ul>
-                </aside>
-                
-                <button class="menu-toggle" id="menuToggle">☰ Menu</button>
-            <?php endif; ?>
-            
-            <main class="main-content">
-                <?= $content ?>
-            </main>
-        </div>
+        <main class="main-content">
+            <?= $content ?>
+        </main>
 
         <footer style="text-align: center; padding: 20px; color: #777; margin-top: 30px;">
             &copy; <?= date('Y') ?> - Sistema de Integração
@@ -100,41 +84,8 @@
         // Adicionar evento de clique ao logo para redirecionar ao dashboard
         document.getElementById('dashboardLink')?.addEventListener('click', function(e) {
             e.preventDefault();
-            window.location.href = determinarDashboardUrl();
+            window.location.href = '/projetos/dashboard/';
         });
-
-        // Toggle do menu mobile
-        document.getElementById('menuToggle')?.addEventListener('click', function() {
-            const menu = document.getElementById('sidebarMenu');
-            menu.classList.toggle('active');
-        });
-
-        // Fechar menu mobile ao clicar em um item
-        document.querySelectorAll('.menu-link').forEach(link => {
-            link.addEventListener('click', function() {
-                const menu = document.getElementById('sidebarMenu');
-                menu.classList.remove('active');
-            });
-        });
-
-        // Passar informações do usuário para o JavaScript
-        window.usuario = {
-            nivel: '<?= $usuario['nivel'] ?? 'cliente' ?>',
-            nome: '<?= htmlspecialchars($usuario['nome'] ?? $usuario['name'] ?? 'Usuário') ?>'
-        };
-        
-        // Função para determinar a URL do dashboard com base no nível do usuário
-        function determinarDashboardUrl() {
-            const basePath = '/projetos/dashboard';
-            const rotas = {
-                'admin': basePath + '/admin',
-                'assinante': basePath + '/assinante',
-                'vendedor': basePath + '/vendedor',
-                'cliente': basePath + '/cliente'
-            };
-            
-            return rotas[window.usuario.nivel] || rotas['cliente'];
-        }
     </script>
 
     <?php if (isset($page_js)): ?>

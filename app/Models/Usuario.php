@@ -1,11 +1,17 @@
 <?php
+// app/Models/Usuario.php
 namespace App\Models;
+
+use App\Config\Database;
 
 class Usuario
 {
     public static function listar($limite = 50)
     {
-        $pdo = \App\Config\Database::getConnection();
+        //$pdo = \App\Config\Database::getConnection();
+
+        $pdo = Database::getConnection();
+
         try {
             $stmt = $pdo->prepare("
                 SELECT * FROM integra_usuarios 
@@ -22,7 +28,8 @@ class Usuario
 
     public static function buscarPorId($id)
     {
-        $pdo = \App\Config\Database::getConnection();
+        //$pdo = \App\Config\Database::getConnection();
+        $pdo = Database::getConnection();
         try {
             $stmt = $pdo->prepare("SELECT * FROM integra_usuarios WHERE id = ?");
             $stmt->execute([$id]);
@@ -35,7 +42,8 @@ class Usuario
 
     public static function buscarPorEmail($email)
     {
-        $pdo = \App\Config\Database::getConnection();
+        //$pdo = \App\Config\Database::getConnection();
+        $pdo = Database::getConnection();
         try {
             $stmt = $pdo->prepare("SELECT * FROM integra_usuarios WHERE email = ?");
             $stmt->execute([$email]);
@@ -48,46 +56,56 @@ class Usuario
 
     // In the cadastrar method (around line 45)
     public static function cadastrar($dados)
-    {
-        $pdo = \App\Config\Database::getConnection();
-        
-        $nome = trim($dados['nome'] ?? '');
-        $nivel = trim($dados['nivel'] ?? '');
-        $email = trim($dados['email'] ?? '');
-        $senha = trim($dados['senha'] ?? ''); // This is the plain text password
-        $cpf = trim($dados['cpf'] ?? '');
-        $telefone = trim($dados['telefone'] ?? '');
+{
+    //$pdo = \App\Config\Database::getConnection();
+    $pdo = Database::getConnection();
+    
+    $nome = trim($dados['nome'] ?? '');
+    $nivel = trim($dados['nivel'] ?? '');
+    $email = trim($dados['email'] ?? '');
+    $senha = trim($dados['senha'] ?? ''); // This is the plain text password
+    $cpf = trim($dados['cpf'] ?? '');
+    $telefone = trim($dados['telefone'] ?? '');
 
-        // Validação básica
-        if (empty($nome) || empty($email) || empty($senha)) {
-            throw new \Exception('Nome, e-mail e senha são obrigatórios.');
-        }
-
-        try {
-            // Verifica se o e-mail já está cadastrado
-            if (self::buscarPorEmail($email)) {
-                throw new \Exception('E-mail já cadastrado.');
-            }
-
-            // Hash the password before storing
-            $senha_hashed = password_hash($senha, PASSWORD_DEFAULT);
-
-            $stmt = $pdo->prepare("
-                INSERT INTO integra_usuarios (nome, nivel, email, senha, cpf, telefone)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ");
-            $stmt->execute([$nome, $nivel, $email, $senha_hashed, $cpf, $telefone]);
-
-            return $pdo->lastInsertId();
-        } catch (\Exception $e) {
-            error_log("Usuario::cadastrar falhou: " . $e->getMessage());
-            throw $e;
-        }
+    // Validação básica
+    if (empty($nome) || empty($email) || empty($senha)) {
+        throw new \Exception('Nome, e-mail e senha são obrigatórios.');
     }
+
+    try {
+        // Verifica se o e-mail já está cadastrado
+        if (self::buscarPorEmail($email)) {
+            throw new \Exception('E-mail já cadastrado.');
+        }
+
+        //$pdo->beginTransaction();
+        
+        // Hash the password before storing
+        $senha_hashed = password_hash($senha, PASSWORD_DEFAULT);
+
+        $stmt = $pdo->prepare("
+            INSERT INTO integra_usuarios (nome, nivel, email, senha, cpf, telefone)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([$nome, $nivel, $email, $senha_hashed, $cpf, $telefone]);
+        
+        // Obter o ID antes do commit
+        $usuarioId = $pdo->lastInsertId();
+        
+        //$pdo->commit();
+        
+        return $usuarioId;
+    } catch (\Exception $e) {
+        //$pdo->rollBack();
+        error_log("Usuario::cadastrar falhou: " . $e->getMessage());
+        throw $e;
+    }
+}
 
 public static function atualizar($id, $dados)
 {
-    $pdo = \App\Config\Database::getConnection();
+    //$pdo = \App\Config\Database::getConnection();
+    $pdo = Database::getConnection();
     
     try {
         // Primeiro verifica se o usuário existe
@@ -123,16 +141,18 @@ public static function atualizar($id, $dados)
         
         $valores[] = $id;
         
-        $sql = "UPDATE integra_usuarios SET " . implode(', ', $sets) . " WHERE id = ?";
-        $stmt = $pdo->prepare($sql);
-        $result = $stmt->execute($valores);
-        
-        if ($stmt->rowCount() === 0) {
-            throw new \Exception('Nenhuma linha foi atualizada. Verifique se os dados são diferentes.');
-        }
-        
+        $pdo->beginTransaction();
+            $sql = "UPDATE integra_usuarios SET " . implode(', ', $sets) . " WHERE id = ?";
+            $stmt = $pdo->prepare($sql);
+            $result = $stmt->execute($valores);
+            
+            if ($stmt->rowCount() === 0) {
+                throw new \Exception('Nenhuma linha foi atualizada. Verifique se os dados são diferentes.');
+            }
+        $pdo->commit();
         return $result;
     } catch (\Exception $e) {
+        $pdo->rollBack();
         error_log("Usuario::atualizar falhou: " . $e->getMessage());
         throw $e;
     }
@@ -140,12 +160,16 @@ public static function atualizar($id, $dados)
 
     public static function deletar($id)
     {
-        $pdo = \App\Config\Database::getConnection();
+        //$pdo = \App\Config\Database::getConnection();
+        $pdo = Database::getConnection();
         
         try {
-            $stmt = $pdo->prepare("DELETE FROM integra_usuarios WHERE id = ?");
+            $pdo->beginTransaction();
+                $stmt = $pdo->prepare("DELETE FROM integra_usuarios WHERE id = ?");
+            $pdo->commit();
             return $stmt->execute([$id]);
         } catch (\Exception $e) {
+            $pdo->rollBack();
             error_log("Usuario::deletar falhou: " . $e->getMessage());
             return false;
         }
@@ -153,7 +177,8 @@ public static function atualizar($id, $dados)
 
     public static function login($email, $senha)
     {
-        $pdo = \App\Config\Database::getConnection();
+        //$pdo = \App\Config\Database::getConnection();
+        $pdo = Database::getConnection();
         
         try {
             // Include senha field in the query

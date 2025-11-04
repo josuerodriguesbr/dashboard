@@ -3,26 +3,29 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title><?= $title ?? 'Dashboard' ?></title>
+    <title><?= $title ?? 'Painel Administrativo' ?></title>
     
-    <!-- No app/Views/layout.php -->
+    <!-- CSS Files -->
     <link rel="stylesheet" href="/projetos/dashboard/public/css/main.css" />
+    <link rel="stylesheet" href="/projetos/dashboard/public/css/admin.css" />
     <?php if (isset($page_css)): ?>
         <link rel="stylesheet" href="<?= $page_css ?>" />
     <?php endif; ?>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     
     <?php if (isset($inline_css)): ?>
         <style><?= $inline_css ?></style>
     <?php endif; ?>
     
 </head>
-<body>
+<body class="admin-body">
     <div class="container">
-        <header class="dashboard-header">
+        <header class="dashboard-header admin-header">
             <div class="header-logo">
-                <a href="#" class="logo-link" id="dashboardLink">
-                    <div class="logo-icon">📊</div>
-                    <div class="logo-text"><?= $title ?></div>
+                <a href="/projetos/dashboard/admin" class="logo-link">
+                    <div class="logo-icon">⚙️</div>
+                    <div class="logo-text"><?= $title ?? 'Admin' ?></div>
                 </a>
             </div>
             
@@ -30,7 +33,7 @@
                 <?php if (isset($usuario) && $usuario): ?>
                     <div class="user-info">
                         <span class="user-name">
-                            <?= htmlspecialchars($usuario['nome'] ?? $usuario['name'] ?? 'Usuário') ?>
+                            <?= htmlspecialchars($usuario['nome'] ?? $usuario['name'] ?? 'Administrador') ?>
                         </span>
                         <a href="/projetos/dashboard/perfil" class="profile-link" title="Meu Perfil">
                             👤
@@ -45,11 +48,10 @@
 
         <div class="content-wrapper">
             <?php if (isset($usuario) && $usuario): ?>
-                <aside class="sidebar-menu" id="sidebarMenu">
-                    <h3 class="menu-title">Navegação</h3>
+                <aside class="sidebar-menu admin-menu" id="sidebarMenu">
+                    <h3 class="menu-title">Administração</h3>
                     <ul class="menu-list">
-                        <!-- Itens do menu serão inseridos aqui dinamicamente -->
-                        <?php renderMenuItems($usuario['nivel'] ?? 'cliente'); ?>
+                        <?php renderAdminMenuItems(); ?>
                     </ul>
                 </aside>
                 
@@ -62,7 +64,7 @@
         </div>
 
         <footer style="text-align: center; padding: 20px; color: #777; margin-top: 30px;">
-            &copy; <?= date('Y') ?> - Sistema de Integração
+            &copy; <?= date('Y') ?> - Sistema de Integração - Área Administrativa
         </footer>
     </div>
 
@@ -80,9 +82,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Limpar cookie manualmente também (backup)
                         document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard/;";
-                        // Adicionar um pequeno delay para garantir que o cookie foi limpo
                         setTimeout(() => {
                             window.location.href = '/projetos/dashboard/';
                         }, 100);
@@ -90,17 +90,10 @@
                 })
                 .catch(error => {
                     console.error('Erro ao fazer logout:', error);
-                    // Mesmo com erro, limpar cookie e redirecionar para login
                     document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard/;";
                     window.location.href = '/projetos/dashboard/';
                 });
             }
-        });
-
-        // Adicionar evento de clique ao logo para redirecionar ao dashboard
-        document.getElementById('dashboardLink')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            window.location.href = determinarDashboardUrl();
         });
 
         // Toggle do menu mobile
@@ -116,25 +109,6 @@
                 menu.classList.remove('active');
             });
         });
-
-        // Passar informações do usuário para o JavaScript
-        window.usuario = {
-            nivel: '<?= $usuario['nivel'] ?? 'cliente' ?>',
-            nome: '<?= htmlspecialchars($usuario['nome'] ?? $usuario['name'] ?? 'Usuário') ?>'
-        };
-        
-        // Função para determinar a URL do dashboard com base no nível do usuário
-        function determinarDashboardUrl() {
-            const basePath = '/projetos/dashboard';
-            const rotas = {
-                'admin': basePath + '/admin',
-                'assinante': basePath + '/assinante',
-                'vendedor': basePath + '/vendedor',
-                'cliente': basePath + '/cliente'
-            };
-            
-            return rotas[window.usuario.nivel] || rotas['cliente'];
-        }
     </script>
 
     <?php if (isset($page_js)): ?>

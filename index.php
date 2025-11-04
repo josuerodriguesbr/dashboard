@@ -1,7 +1,7 @@
 <?php
 // /projetos/dashboard/index.php
 
-require_once 'config/autoload.php';
+require_once 'public/autoload.php';
 
 use App\Core\Router;
 use App\Controllers\DashboardController;

@@ -30,69 +30,82 @@ if (!function_exists('redirect')) {
     }
 }
 
-/*
 if (!function_exists('view')) {
-     // Carrega uma view e exibe como HTML
-    function view($name, $data = []) {
-        $file = ROOT . 'app/Views/' . $name . '.php';
-        if (file_exists($file)) {
-            header('Content-Type: text/html; charset=utf-8');
-            extract($data);
-            include $file;
-            exit;
-        }
-        http_response_code(500);
-        echo "View X não encontrada: $file";
-        exit;
-    }
-}
-*/
-
-if (!function_exists('view')) {
-function view($viewName, $data = []) {
-    // Verificar se a verificação de autenticação deve ser ignorada
-    $ignorarAutenticacao = isset($data['ignorarAutenticacao']) && $data['ignorarAutenticacao'] === true;
-    
-    // Obter os dados do usuário logado usando o middleware existente (se não ignorar autenticação)
-    if (!$ignorarAutenticacao) {
-        try {
-            $usuario = \App\Middleware\AuthMiddleware::verificarOuFalse();
-            $data['usuario'] = $usuario;
-        } catch (Exception $e) {
+    function view($viewName, $data = [], $returnAsString = false) {
+        // Verificar se a verificação de autenticação deve ser ignorada
+        $ignorarAutenticacao = isset($data['ignorarAutenticacao']) && $data['ignorarAutenticacao'] === true;
+        
+        // Obter os dados do usuário logado usando o middleware existente (se não ignorar autenticação)
+        if (!$ignorarAutenticacao) {
+            try {
+                $usuario = \App\Middleware\AuthMiddleware::verificarOuFalse();
+                $data['usuario'] = $usuario;
+            } catch (Exception $e) {
+                $data['usuario'] = false;
+            }
+        } else {
             $data['usuario'] = false;
         }
-    } else {
-        $data['usuario'] = false;
-    }
-    
-    // Extrair os dados para variáveis
-    extract($data);
-    
-    // Verificar se a página deve ser renderizada sem layout (para iframes)
-    $semLayout = isset($semLayout) && $semLayout === true;
-    
-    // Caminho para o arquivo de view
-    $viewFile = 'app/Views/' . $viewName . '.php';
-    
-    // Verificar se o arquivo da view existe
-    if (file_exists($viewFile)) {
-        // Iniciar buffer de saída para a view
-        ob_start();
-        include $viewFile;
-        $content = ob_get_clean();
         
-        // Se não estiver em modo "sem layout", incluir o layout
-        if (!$semLayout) {
-            $layoutFile = 'app/Views/layout.php';
-            include $layoutFile;
+        // Extrair os dados para variáveis
+        extract($data);
+        
+        // Verificar se a página deve ser renderizada sem layout (para iframes)
+        $semLayout = isset($data['semLayout']) && $data['semLayout'] === true;
+        
+        // Determinar qual layout usar (se não estiver em modo sem layout)
+        $layout = $data['layout'] ?? 'main'; // Padrão é 'main'
+        
+        // Caminho para o arquivo de view
+        $viewFile = 'app/Views/' . $viewName . '.php';
+        
+        // Verificar se o arquivo da view existe
+        if (file_exists($viewFile)) {
+            // Iniciar buffer de saída para a view
+            ob_start();
+            include $viewFile;
+            $content = ob_get_clean();
+            
+            // Se for para retornar como string, apenas retornar o conteúdo
+            if ($returnAsString) {
+                return $content;
+            }
+            
+            // Se não estiver em modo "sem layout", incluir o layout apropriado
+            if (!$semLayout) {
+                $layoutFile = 'app/Views/layouts/' . $layout . '.php';
+                // Verificar se o layout específico existe, senão usar o main como fallback
+                if (!file_exists($layoutFile)) {
+                    $layoutFile = 'app/Views/layouts/main.php';
+                }
+                
+                if (file_exists($layoutFile)) {
+                    include $layoutFile;
+                } else {
+                    // Se nenhum layout for encontrado, mostrar apenas o conteúdo
+                    echo $content;
+                }
+            } else {
+                // Se estiver em modo "sem layout", apenas retornar o conteúdo
+                echo $content;
+            }
         } else {
-            // Se estiver em modo "sem layout", apenas retornar o conteúdo
-            echo $content;
+            // Caso a view não exista
+            echo "View não encontrada: " . $viewFile;
         }
-    } else {
-        // Caso a view não exista
-        echo "View não encontrada: " . $viewFile;
+        
+        // Se chegou até aqui e não é para retornar como string, encerrar execução
+        if (!$returnAsString) {
+            exit;
+        }
     }
 }
 
+function renderMenuItems($userLevel)
+{
+    \App\Utils\MenuHelper::renderMenuItems($userLevel);
 }
+
+// ... resto do arquivo ...
+
+?>

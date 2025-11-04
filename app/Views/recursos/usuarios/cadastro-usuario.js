@@ -7,7 +7,7 @@ document.getElementById('formCadastroUsuario').addEventListener('submit', async 
     status.className = 'status';
 
     try {
-        const res = await fetch('/projetos/dashboard/cadastrar-usuario', {
+        const res = await fetch('/projetos/dashboard/cadastro-usuario', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
