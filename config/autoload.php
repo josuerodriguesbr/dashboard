@@ -8,7 +8,7 @@ require_once ROOT . 'app/Utils/helpers.php';
 
 // Definições de caminhos públicos (acessíveis por usuários não logados)
 define('FULL_BASE_URL', getBaseUrl()); // URL completa dinâmica
-define('CSS_PATH', FULL_BASE_URL . '/public/css/style.css');
+define('CSS_PADRAO', FULL_BASE_URL . '/public/css/style.css');
 define('JS_PATH', FULL_BASE_URL . '/public/js/tema.js');
 
 //var_dump(CSS_PATH);

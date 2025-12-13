@@ -1,11 +1,10 @@
 <?php
 // /app/Views/recursos/usuarios/cadastro-usuario.php
 
-$title = 'Cadastro Usuário';
+$title = '➕ Cadastrar Usuário';
 
 // Definindo caminhos para os assets
-$page_css = '/projetos/dashboard/app/Views/recursos/usuarios/cadastro-usuario.css';
-$page_js = '/projetos/dashboard/app/Views/recursos/usuarios/cadastro-usuario.js';
+$page_js_module = '/projetos/dashboard/public/js/recursos/usuarios/cadastro-usuario.js';
 
 // Inclui o layout
 ob_start();

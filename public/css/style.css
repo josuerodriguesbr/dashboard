@@ -280,7 +280,7 @@ footer {
    FORMULÁRIOS
    ======================================== */
 
-   /* Desabilita transição em alguns elementos para evitar "flickering" */
+/* Desabilita transição em alguns elementos para evitar "flickering" */
 input, textarea, select {
   transition: none;
 }
@@ -290,7 +290,9 @@ input, textarea, select {
 .campoDeSenha,
 .campoDeEmail,
 .campoDeData,
-.campoDeTelefone {
+.campoDeTelefone,
+.campoDeCPF,
+.campoDeOpcoes {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
@@ -300,7 +302,9 @@ input, textarea, select {
 .campoDeSenha label,
 .campoDeEmail label,
 .campoDeData label,
-.campoDeTelefone label {
+.campoDeTelefone label,
+.campoDeCPF label,
+.campoDeOpcoes Label {
   font-weight: 600;
   font-size: 0.875rem;
   color: var(--cor-texto);
@@ -310,7 +314,8 @@ input, textarea, select {
 .campoDeSenha input,
 .campoDeEmail input,
 .campoDeData input,
-.campoDeTelefone input {
+.campoDeTelefone input,
+.campoDeCPF input {
   padding: 0.75rem;
   border: 1px solid var(--cor-borda);
   border-radius: 0.5rem;
@@ -325,10 +330,34 @@ input, textarea, select {
 .campoDeSenha input:focus,
 .campoDeEmail input:focus,
 .campoDeData input:focus,
-.campoDeTelefone input:focus {
+.campoDeTelefone input:focus,
+.campoDeCPF input:focus,
+.campoDeOpcoes select:focus {
   border-color: var(--cor-botao);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
+
+/* Estilo específico para CPF (formato visual e alinhamento) */
+.campoDeCPF input {
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  /* placeholder sugestivo para o formato 000.000.000-00 */
+}
+
+/* Estilo para grupo de opções (select) - classe `campoDeOpcoes` */
+.campoDeOpcoes select {
+  padding: 0.75rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.5rem;
+  background-color: var(--cor-fundo-input);
+  color: var(--cor-texto);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  cursor: pointer;
+}
+
 
 /* Estilo para textarea */
 .campoDeMensagem {

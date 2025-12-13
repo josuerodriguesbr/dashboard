@@ -1,12 +1,20 @@
-// /app/Views/recursos/usuarios/cadastro-usuario.js
+// public/js/recursos/usuarios/cadastro-usuario.js
+import { attachCpfListener, focusFirstVisible } from '/projetos/dashboard/public/js/funcoes.js';
 
-import { attachCpfListener } from '/projetos/dashboard/public/js/funcoes.js';
+function initFormScripts() {
+    attachCpfListener(); // Atacha máscara de CPF (se existir o campo)
+    // Tenta focar o primeiro campo visível dentro do formulário; faz retry curto caso autofill interfira
+    let focused = focusFirstVisible('#formCadastroUsuario');
+    if (!focused) {
+        setTimeout(() => {
+            focusFirstVisible('#formCadastroUsuario');
+        }, 120);
+    }
 
-focusFirstVisible(); // Foca o primeiro campo do formulário
+    const form = document.getElementById('formCadastroUsuario');
+    if (!form) return;
 
-attachCpfListener(); // Atacha máscara de CPF (se existir o campo)
-
-document.getElementById('formCadastroUsuario').addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
@@ -29,8 +37,6 @@ document.getElementById('formCadastroUsuario').addEventListener('submit', async 
         const result = await res.json();
         
         if (result.success) {
-            // AQUI É A GRANDE MUDANÇA: Não salvamos mais o token no localStorage
-            // O token foi definido como cookie pelo servidor.
             status.textContent = '✅ Usuário cadastrado com sucesso!';
             status.className = 'status success';
             e.target.reset();
@@ -52,4 +58,13 @@ document.getElementById('formCadastroUsuario').addEventListener('submit', async 
         status.textContent = ''; 
         status.className = 'status';
     }, 10000);
-});
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFormScripts);
+} else {
+    // módulo já executando após carregamento do DOM na maioria dos casos, mas
+    // chamamos init para garantir comportamento
+    initFormScripts();
+}

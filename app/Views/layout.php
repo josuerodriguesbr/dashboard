@@ -7,26 +7,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title><?= $title ?? 'Dashboard' ?></title>
     
-    <?php if (isset($page_css)): ?>
-        <link rel="stylesheet" href="<?= $page_css ?>" />
+    <?php if (defined('CSS_PADRAO')): ?>
+        <link rel="stylesheet" href="<?= CSS_PADRAO ?>" />
     <?php endif; ?>
     
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <?php if (isset($inline_css)): ?>
-        <style><?= $inline_css ?></style>
-    <?php endif; ?>
 
-
-    
 </head>
 <body>
 
 
 
-    <div class="container">
+    <div class="container-pagina">
 
-        <header class="dashboard-header">
+        <header>
             <div class="header-logo">
                 <a href="#" class="logo-link">
                     <div class="logo-icon">📊</div>
@@ -51,9 +45,11 @@
             </div>
         </header>
 
-        <?= $content ?>
+        <section>
+            <?= $content ?>
+        </section>
 
-        <footer style="text-align: center; padding: 20px; color: #777; margin-top: 30px;">
+         <footer>
             &copy; <?= date('Y') ?> - Sistema de Integração
         </footer>
 
@@ -131,12 +127,9 @@
       
 </script>
 
-    <?php if (isset($page_js)): ?>
-        <script src="<?= $page_js ?>"></script>
+    <?php if (isset($page_js_module)): ?>
+        <script type="module" src="<?= $page_js_module ?>"></script>
     <?php endif; ?>
 
-    <?php if (isset($inline_js)): ?>
-        <script><?= $inline_js ?></script>
-    <?php endif; ?>
 </body>
 </html>
