@@ -2,59 +2,66 @@
 // app/Middleware/AuthMiddleware.php
 namespace App\Middleware;
 
-use Exception;
+use App\Models\Usuario;
+use App\Utils\UserContext;
 
 class AuthMiddleware
 {
-public static function verificar()
-{
-    // Change: Check for the token in the $_COOKIE superglobal.
-    // It's no longer expected in the Authorization header.
-    if (!isset($_COOKIE['authToken'])) {
-        throw new Exception('Token não fornecido');
-    }
-
-    $token = $_COOKIE['authToken'];
-
-    if (empty($token)) {
-        throw new Exception('Token vazio');
-    }
-
-    try {
-        // ✅ Usa o JWT para validar sessão e token
-        $resultado = \App\Utils\JWT::verifySession($token);
+    public static function verificar()
+    {
+        error_log("Iniciando verificação de autenticação");
         
-        if (!$resultado || !isset($resultado['payload'])) {
-            throw new Exception('Token inválido ou sessão expirada');
+        // Verificar se existe um token de autenticação
+        $token = $_COOKIE['authToken'] ?? '';
+        error_log("Token do cookie: " . ($token ? 'presente' : 'ausente'));
+        
+        if (empty($token)) {
+            // Tentar obter o token do cabeçalho Authorization
+            $headers = apache_request_headers();
+            $authHeader = $headers['Authorization'] ?? '';
+            error_log("Authorization header: " . ($authHeader ? 'presente' : 'ausente'));
+            
+            if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+                $token = $matches[1];
+                error_log("Token do header: presente");
+            }
         }
         
-        return $resultado['payload']; // retorna os dados do usuário (userId, nivel, etc)
-    } catch (Exception $e) {
-        // It's a good practice to also clear the cookie if the token is invalid.
-        // This prevents the user from being stuck in a loop.
-        setcookie('authToken', '', time() - 3600, '/projetos/dashboard/');
-        throw new Exception('Autenticação falhou: ' . $e->getMessage());
+        if (empty($token)) {
+            error_log("Token de autenticação não encontrado");
+            throw new \Exception('Token de autenticação não encontrado.');
+        }
+        
+        // Verificar o token
+        error_log("Verificando token");
+        $resultado = Usuario::verificarToken($token);
+        error_log("Resultado da verificação: " . print_r($resultado, true));
+        
+        if (!$resultado['success']) {
+            error_log("Token inválido ou expirado: " . $resultado['message']);
+            throw new \Exception('Token inválido ou expirado.');
+        }
+        
+        // Definir o contexto do usuário
+        UserContext::setUsuario($resultado['usuario']);
+        if (isset($resultado['usuario']['nivel'])) {
+            UserContext::setNivelAtivo($resultado['usuario']['nivel']);
+        }
+        
+        error_log("Autenticação bem sucedida: " . print_r($resultado['usuario'], true));
+        return $resultado['usuario'];
     }
-}
-
-    public static function verificarEInjetar(&$router)
+    
+    public static function verificarEConfigurar()
     {
         try {
-            return self::verificar();
-        } catch (Exception $e) {
-            // Em caso de falha, redireciona para a página inicial
+            $usuario = self::verificar();
+            return $usuario;
+        } catch (\Exception $e) {
+            error_log("Falha na autenticação: " . $e->getMessage());
+            // Redirecionar para a página de login
             header('Location: /projetos/dashboard/');
             exit;
         }
     }
-
-    // Novo método para verificar e retornar usuário ou false
-    public static function verificarOuFalse()
-    {
-        try {
-            return self::verificar();
-        } catch (Exception $e) {
-            return false;
-        }
-    }    
 }

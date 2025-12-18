@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0066cc">
 
 <!-- Para iOS (opcional, mas recomendado) -->
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="public/icone-192.png">
 
@@ -79,3 +79,17 @@
     <script type="module" src="/projetos/dashboard/public/js/recursos/usuarios/login.js"></script>
 </body>
 </html>
+```
+<?php
+// /app/Views/recursos/usuarios/login.php
+
+$title = 'Login';
+$logo_icone = '🔐';
+$logo_titulo = 'Área Restrita';
+$page_js_module = '/projetos/dashboard/public/js/recursos/usuarios/login.js';
+
+// Inclui o conteúdo HTML da página.
+// A função view() que chama este arquivo irá capturar a saída.
+// O controller especifica 'semLayout' => true, então o layout principal não será usado.
+include ROOT . 'app/Views/recursos/usuarios/login.html';
+

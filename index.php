@@ -9,6 +9,7 @@ use App\Controllers\WebhookController;
 use App\Controllers\AuthController;
 use App\Controllers\AdminController;
 use App\Controllers\AssinanteController;
+use App\Controllers\OperadorController;
 use App\Controllers\VendedorController;
 use App\Controllers\ClienteController;
 
@@ -35,26 +36,34 @@ $router->post('/logout', [AuthController::class, 'logout']);
 // Painéis
 $router->get('/admin', [AdminController::class, 'dashboard']);
 $router->get('/assinante', [AssinanteController::class, 'dashboard']);
+$router->get('/operador', [OperadorController::class, 'dashboard']);
 $router->get('/vendedor', [VendedorController::class, 'dashboard']);
+$router->get('/operador', [OperadorController::class, 'dashboard']);
 $router->get('/cliente', [ClienteController::class, 'dashboard']);
 
 
 $router->get('/verificar-token', function () {
+    error_log("Requisição para /verificar-token recebida");
     try {
         $usuario = \App\Middleware\AuthMiddleware::verificar();
+        error_log("Token verificado com sucesso: " . print_r($usuario, true));
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode([
+        $response = [
             'authenticated' => true,
             'user' => $usuario
-        ]);
+        ];
+        echo json_encode($response);
     } catch (Exception $e) {
+        error_log("Erro ao verificar token: " . $e->getMessage());
         http_response_code(401);
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode([
+        $response = [
             'authenticated' => false,
             'message' => $e->getMessage()
-        ]);
+        ];
+        echo json_encode($response);
     }
+    error_log("Resposta enviada: " . ob_get_contents());
     exit; // Garantir que nada mais seja executado
 });
 

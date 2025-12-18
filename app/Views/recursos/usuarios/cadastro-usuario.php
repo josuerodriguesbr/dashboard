@@ -1,14 +1,16 @@
 <?php
 // /app/Views/recursos/usuarios/cadastro-usuario.php
 
-$title = '➕ Cadastrar Usuário';
-
-// Definindo caminhos para os assets
+$logo_icone = '➕';
+$logo_titulo = 'Cadastro Usuário';
 $page_js_module = '/projetos/dashboard/public/js/recursos/usuarios/cadastro-usuario.js';
 
-// Inclui o layout
-ob_start();
-include ROOT . 'app/Views/recursos/usuarios/cadastro-usuario.html';
-$content = ob_get_clean();
+// Garantir que o CSS seja carregado
+if (!defined('CSS_PADRAO')) {
+    define('CSS_PADRAO', '/projetos/dashboard/public/css/style.css');
+}
 
-include ROOT . 'app/Views/layout.php';
+// Inclui o conteúdo HTML da página.
+// A função view() que chama este arquivo irá capturar a saída
+// e inseri-la na variável $content do layout.php.
+include ROOT . 'app/Views/recursos/usuarios/cadastro-usuario.html';

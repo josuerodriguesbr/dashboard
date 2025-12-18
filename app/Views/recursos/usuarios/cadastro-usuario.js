@@ -1,6 +1,6 @@
 // /app/Views/recursos/usuarios/cadastro-usuario.js
 
-import { attachCpfListener } from '/projetos/dashboard/public/js/funcoes.js';
+import { focusFirstVisible, attachCpfListener } from '/projetos/dashboard/public/js/funcoes.js';
 
 focusFirstVisible(); // Foca o primeiro campo do formulário
 

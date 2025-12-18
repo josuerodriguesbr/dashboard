@@ -55,41 +55,57 @@ class JWT
     // Método para criar uma sessão com JWT
     public static function createSession($usuarioId, $userData = [], $expiryHours = 24)
     {
-        $payload = array_merge([
-            'usuarioId' => $usuarioId
-        ], $userData);
-        
-        $token = self::encode($payload, $expiryHours);
-        
-        // Salvar a sessão no banco de dados
-        $sessaoId = Sessao::criar($usuarioId, $token, $expiryHours);
-        
-        if ($sessaoId) {
-            return [
-                'token' => $token,
-                'sessaoId' => $sessaoId
-            ];
+        try {
+            $payload = array_merge([
+                'usuarioId' => $usuarioId
+            ], $userData);
+            
+            $token = self::encode($payload, $expiryHours);
+            
+            // Salvar a sessão no banco de dados
+            $sessaoId = Sessao::criar($usuarioId, $token, $expiryHours);
+            
+            if ($sessaoId) {
+                return [
+                    'token' => $token,
+                    'sessaoId' => $sessaoId
+                ];
+            }
+            
+            return false;
+        } catch (\Exception $e) {
+            error_log("JWT::createSession falhou: " . $e->getMessage());
+            error_log("JWT::createSession trace: " . $e->getTraceAsString());
+            throw $e; // Relançar a exceção para que seja capturada no método login
         }
-        
-        return false;
     }
     
     // Método para verificar uma sessão
     public static function verifySession($token)
     {
-        // Primeiro verificar se a sessão existe no banco
-        $sessao = Sessao::buscarPorToken($token);
-        
-        if (!$sessao) {
-            throw new \Exception('Sessão inválida ou expirada');
+        try {
+            error_log("Iniciando verificação da sessão com token: " . substr($token, 0, 20) . "...");
+            
+            // Primeiro verificar se a sessão existe no banco
+            $sessao = Sessao::buscarPorToken($token);
+            error_log("Resultado da busca por token: " . print_r($sessao, true));
+            
+            if (!$sessao) {
+                throw new \Exception('Sessão inválida ou expirada');
+            }
+            
+            // Depois verificar o JWT
+            $payload = self::decode($token);
+            error_log("Payload decodificado: " . print_r($payload, true));
+            
+            return [
+                'sessao' => $sessao,
+                'payload' => $payload
+            ];
+        } catch (\Exception $e) {
+            error_log("JWT::verifySession falhou: " . $e->getMessage());
+            error_log("JWT::verifySession trace: " . $e->getTraceAsString());
+            throw $e; // Relançar a exceção
         }
-        
-        // Depois verificar o JWT
-        $payload = self::decode($token);
-        
-        return [
-            'sessao' => $sessao,
-            'payload' => $payload
-        ];
     }
 }

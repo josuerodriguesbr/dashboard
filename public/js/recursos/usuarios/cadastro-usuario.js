@@ -1,8 +1,10 @@
 // public/js/recursos/usuarios/cadastro-usuario.js
-import { attachCpfListener, focusFirstVisible } from '/projetos/dashboard/public/js/funcoes.js';
+import { attachCpfListener, focusFirstVisible, initBackButtons } from '/projetos/dashboard/public/js/funcoes.js';
 
 function initFormScripts() {
     attachCpfListener(); // Atacha máscara de CPF (se existir o campo)
+    // Inicializa botões de voltar (se houver .back-btn na página)
+    try { initBackButtons(); } catch (e) { /* silent */ }
     // Tenta focar o primeiro campo visível dentro do formulário; faz retry curto caso autofill interfira
     let focused = focusFirstVisible('#formCadastroUsuario');
     if (!focused) {

@@ -22,10 +22,50 @@
 
         <header>
             <div class="header-logo">
+                <?php 
+                // Determinar se o botão de voltar deve ser exibido
+                $mostrarBotaoVoltar = true;
+                $uri = $_SERVER['REQUEST_URI'] ?? '';
+                
+                // Lista de páginas onde o botão de voltar não deve aparecer
+                $paginasSemBotaoVoltar = [
+                    '/projetos/dashboard/',
+                    '/projetos/dashboard/admin',
+                    '/projetos/dashboard/assinante',
+                    '/projetos/dashboard/cliente',
+                    '/projetos/dashboard/operador',
+                    '/projetos/dashboard/vendedor'
+                ];
+                
+                // Verificar se a página atual está na lista de páginas sem botão voltar
+                foreach ($paginasSemBotaoVoltar as $pagina) {
+                    if (strpos($uri, $pagina) !== false && strlen($uri) <= strlen($pagina) + 1) {
+                        $mostrarBotaoVoltar = false;
+                        break;
+                    }
+                }
+                
+                // Mostrar botão de voltar apenas se necessário
+                if ($mostrarBotaoVoltar): ?>
+                    <button class="back-btn" type="button" aria-label="Voltar">◀</button>
+                <?php endif; ?>
+
                 <a href="#" class="logo-link">
-                    <div class="logo-icon">📊</div>
-                    <div class="logo-text">Dashboard</div>
+
+                    <?php if (isset($logo_icone) && $logo_icone): ?>
+                        <div class="logo-icon"><?php echo $logo_icone; ?></div>
+                    <?php else: ?>
+                        <div class="logo-icon">📊</div>
+                    <?php endif; ?>
+
+                    <?php if (isset($logo_titulo) && $logo_titulo): ?>
+                        <div class="logo-text"><?php echo $logo_titulo; ?></div>
+                    <?php else: ?>
+                        <div class="logo-text">Dashboard</div>
+                    <?php endif; ?>
+
                 </a>
+                
             </div>
             
             <div class="header-actions">
@@ -55,13 +95,64 @@
 
     </div>
 
-<script>
+<?php
+// Preparar valores do usuário de forma segura para uso no script
+// Evita notices quando $usuario pode ser false (boolean) em vez de array
+$__usuario_nivel = (is_array($usuario) && isset($usuario['nivel'])) ? $usuario['nivel'] : 'cliente';
+$__usuario_nome = (is_array($usuario)) ? ($usuario['nome'] ?? $usuario['name'] ?? 'Usuário') : 'Usuário';
+$__rota_dashboard = (is_array($usuario) && isset($usuario['nivel'])) ? getRotaPorUserNivel($usuario['nivel']) : '/projetos/dashboard/';
+?>
 
-    // Alternar tema claro/escuro (exemplo simples)
-    document.documentElement.classList.toggle('tema-claro');
+<script>
+    // Função para verificar token atualizado (COM DEBUG)
+    function verificarTokenAtualizado() {
+        console.log('[DEBUG] Executando verificarTokenAtualizado...');
+        try {
+            const cookies = document.cookie.split(';');
+            let authToken = null;
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'authToken') {
+                    authToken = value;
+                    break;
+                }
+            }
+            console.log('[DEBUG] authToken encontrado:', authToken ? 'Sim' : 'Não');
+            
+            if (authToken) {
+                const tokenParts = authToken.split('.');
+                if (tokenParts.length === 3) {
+                    try {
+                        const payload = JSON.parse(atob(tokenParts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                        console.log('[DEBUG] Payload do token:', payload);
+                        console.log('[DEBUG] Nome no payload (do token):', payload.nome);
+                        console.log('[DEBUG] Nome na window (da página atual):', window.usuario ? window.usuario.nome : 'N/A');
+
+                        if (payload.nome && window.usuario && payload.nome !== window.usuario.nome) {
+                            console.log('[DEBUG] Nomes são diferentes! ATUALIZANDO o nome na tela.');
+                            const userNameElement = document.querySelector('.user-name');
+                            if (userNameElement) {
+                                userNameElement.textContent = payload.nome;
+                                window.usuario.nome = payload.nome;
+                                console.log('[DEBUG] DOM e window.usuario.nome atualizados para:', payload.nome);
+                            } else {
+                                console.log('[DEBUG] ERRO: Elemento .user-name não encontrado no DOM.');
+                            }
+                        } else {
+                            console.log('[DEBUG] Nomes são iguais ou dados ausentes. Nenhuma atualização é necessária.');
+                        }
+                    } catch (e) {
+                        console.error('[DEBUG] Erro ao decodificar token:', e);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('[DEBUG] Erro ao verificar token no cookie:', e);
+        }
+    }
 
     // Função de logout
-    document.getElementById('logoutBtn')?.addEventListener('click', function() {
+    function handleLogout() {
         if (confirm('Tem certeza que deseja sair?')) {
             fetch('/projetos/dashboard/logout', {
                 method: 'POST',
@@ -72,37 +163,47 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    // Limpar cookie manualmente também (backup)
-                    document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard/;";
-                    // Adicionar um pequeno delay para garantir que o cookie foi limpo
-                    setTimeout(() => {
-                        window.location.href = '/projetos/dashboard/';
-                    }, 100);
-                }
+                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard/;";
+                setTimeout(() => {
+                    window.location.href = '/projetos/dashboard/';
+                }, 100);
             })
             .catch(error => {
                 console.error('Erro ao fazer logout:', error);
-                // Mesmo com erro, limpar cookie e redirecionar para login
                 document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard/;";
                 window.location.href = '/projetos/dashboard/';
             });
         }
-    });
+    }
 
-    // Adicionar evento de clique ao logo para redirecionar ao dashboard
-    document.querySelector('.logo-link')?.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        getDashboardRoute(); // Obter a rota correta do servidor
-    });
+    // Inicializar botão de logout
+    function initLogoutButton() {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            // Remover qualquer evento anterior para evitar duplicatas
+            logoutBtn.removeEventListener('click', handleLogout);
+            // Adicionar o evento de clique
+            logoutBtn.addEventListener('click', handleLogout);
+        }
+    }
+
+    // Inicializar logo link
+    function initLogoLink() {
+        const logoLink = document.querySelector('.logo-link');
+        if (logoLink) {
+            logoLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                getDashboardRoute();
+            });
+        }
+    }
 
     // Passar informações do usuário para o JavaScript
     window.usuario = {
-        nivel: '<?php echo $usuario['nivel'] ?? 'cliente'; ?>',
-        nome: '<?php echo htmlspecialchars($usuario['nome'] ?? $usuario['name'] ?? 'Usuário'); ?>'
+        nivel: <?= json_encode($usuario['nivel'] ?? 'cliente') ?>,
+        nome: <?= json_encode($usuario['nome'] ?? $usuario['name'] ?? 'Usuário') ?>
     };
-    
+
     // Função para obter a rota do dashboard via AJAX
     function getDashboardRoute() {
         fetch('/projetos/dashboard/verificar-token', {
@@ -112,20 +213,59 @@
         .then(response => response.json())
         .then(data => {
             if (data.authenticated) {
-                // Redirecionar para a rota correta
-                window.location.href = '<?php echo isset($usuario) ? getRotaPorUserNivel($usuario['nivel']) : '/projetos/dashboard/'; ?>';
+                window.location.href = <?= json_encode($__rota_dashboard) ?>;
             } else {
                 window.location.href = '/projetos/dashboard/';
             }
         })
         .catch(error => {
             console.error('Erro ao obter rota:', error);
-            // Fallback para a rota padrão
             window.location.href = '/projetos/dashboard/';
         });
     }
+    
+    <?php if ($mostrarBotaoVoltar): ?>
+    // Inicializar botão de voltar
+    function initBackButton() {
+        import('/projetos/dashboard/public/js/funcoes.js')
+            .then(module => {
+                module.initBackButtons();
+            })
+            .catch(error => {
+                console.error('Erro ao carregar funcoes.js:', error);
+            });
+    }
+    <?php endif; ?>
+    
+    // Inicializar todos os componentes quando o DOM estiver pronto
+    function initializeComponents() {
+        initLogoutButton();
+        initLogoLink();
+        // A verificação do token será feita pelo evento 'pageshow' para garantir a atualização constante.
+        // verificarTokenAtualizado(); 
+        <?php if ($mostrarBotaoVoltar): ?>
+        initBackButton();
+        <?php endif; ?>
+    }
+
+    // Adiciona um listener para o evento 'pageshow'. (COM DEBUG)
+    window.addEventListener('pageshow', function(event) {
+        console.log('[DEBUG] Evento "pageshow" disparado. A página veio do cache (bfcache)? ' + event.persisted);
+        verificarTokenAtualizado();
+    });
+    
+    // Manter a inicialização dos componentes que não precisam ser recarregados
+    if (document.readyState === 'loading') {
+        // DOM ainda está carregando, aguardar
+        document.addEventListener('DOMContentLoaded', initializeComponents);
+    } else {
+        // DOM já está pronto, inicializar imediatamente
+        initializeComponents();
+    }
       
 </script>
+
+    <!-- back.js removido; use `goBack` de public/js/funcoes.js quando este módulo for importado nas páginas -->
 
     <?php if (isset($page_js_module)): ?>
         <script type="module" src="<?= $page_js_module ?>"></script>

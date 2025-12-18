@@ -49,7 +49,7 @@ function view($viewName, $data = []) {
     // Obter os dados do usuário logado usando o middleware existente (se não ignorar autenticação)
     if (!$ignorarAutenticacao) {
         try {
-            $usuario = \App\Middleware\AuthMiddleware::verificarOuFalse();
+            $usuario = \App\Middleware\AuthMiddleware::verificar();
             $data['usuario'] = $usuario;
         } catch (Exception $e) {
             $data['usuario'] = false;
@@ -89,20 +89,92 @@ function view($viewName, $data = []) {
 }
 
 if (!function_exists('getRotaPorUserNivel')) {
+    /**
+     * Retorna a rota do dashboard com base no nível do usuário
+     *
+     * @param string $nivel Nível do usuário
+     * @return string Rota do dashboard
+     */
     function getRotaPorUserNivel($nivel) {
         $basePath = '/projetos/dashboard';
-
+        
+        // Verificar se o nível foi fornecido
+        if (empty($nivel)) {
+            $nivel = 'cliente'; // Valor padrão
+        }
+        
         switch ($nivel) {
             case 'admin':
                 return $basePath . '/admin';
             case 'assinante':
                 return $basePath . '/assinante';
+            case 'operador':
+                return $basePath . '/operador';                
             case 'vendedor':
                 return $basePath . '/vendedor';
             case 'cliente':
             default:
                 return $basePath . '/cliente';
         }
+    }
+}
+
+if (!function_exists('getRotaPorPapel')) {
+    /**
+     * Retorna a rota do dashboard com base no papel do usuário
+     *
+     * @param string $papel Papel do usuário
+     * @return string Rota do dashboard
+     */
+    function getRotaPorPapel($papel) {
+        $basePath = '/projetos/dashboard';
+        
+        switch ($papel) {
+            case 'admin':
+                return $basePath . '/admin';
+            case 'assinante':
+                return $basePath . '/assinante';
+            case 'operador':
+                return $basePath . '/operador';                
+            case 'vendedor':
+                return $basePath . '/vendedor';
+            case 'cliente':
+            default:
+                return $basePath . '/cliente';
+        }
+    }
+}
+
+if (!function_exists('getNivelAtivo')) {
+    /**
+     * Retorna o nível ativo do usuário logado
+     *
+     * @return string|null Nível ativo do usuário
+     */
+    function getNivelAtivo() {
+        return \App\Utils\UserContext::getNivelAtivo();
+    }
+}
+
+if (!function_exists('getUsuarioLogado')) {
+    /**
+     * Retorna os dados do usuário logado
+     *
+     * @return array|null Dados do usuário logado
+     */
+    function getUsuarioLogado() {
+        return \App\Utils\UserContext::getUsuario();
+    }
+}
+
+if (!function_exists('getPerfilAtivo')) {
+    /**
+     * Retorna o perfil ativo do usuário logado
+     *
+     * @return array|null Perfil ativo do usuário
+     */
+    function getPerfilAtivo() {
+        return \App\Utils\UserContext::getPerfilAtivo();
     }
 }
 

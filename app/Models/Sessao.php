@@ -26,6 +26,7 @@ class Sessao
             return $pdo->lastInsertId();
         } catch (\Exception $e) {
             error_log("Sessao::criar falhou: " . $e->getMessage());
+            error_log("Sessao::criar trace: " . $e->getTraceAsString());
             return false;
         }
     }
@@ -35,17 +36,22 @@ class Sessao
         $pdo = self::getConnection();
         
         try {
+            error_log("Buscando sessão por token: " . substr($token, 0, 20) . "...");
+            
             $stmt = $pdo->prepare("
-                SELECT s.*, u.nome as usuarioNome, u.nivel as usuarioNivel, u.email as usuarioEmail
+                SELECT s.*, u.nome as usuarioNome, u.email as usuarioEmail
                 FROM integra_sessoes s
                 JOIN integra_usuarios u ON s.usuarioId = u.id
                 WHERE s.token = ? AND s.isActive = 1 AND s.expiresAt > NOW()
             ");
             
             $stmt->execute([$token]);
-            return $stmt->fetch();
+            $result = $stmt->fetch();
+            error_log("Resultado da busca: " . print_r($result, true));
+            return $result;
         } catch (\Exception $e) {
             error_log("Sessao::buscarPorToken falhou: " . $e->getMessage());
+            error_log("Sessao::buscarPorToken trace: " . $e->getTraceAsString());
             return false;
         }
     }

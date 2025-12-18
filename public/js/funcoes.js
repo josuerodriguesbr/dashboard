@@ -78,3 +78,43 @@ export function focusFirstVisible(root = document, selector = 'input,select,text
   }
   return null;
 }
+
+// Voltar à página anterior com fallback.
+export function goBack() {
+  try {
+    if (document.referrer && new URL(document.referrer).origin === location.origin) {
+      history.back();
+      return;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  if (history.length > 1) {
+    history.back();
+  } else {
+    window.location.href = '/projetos/dashboard/';
+  }
+}
+
+// Inicializa botões de voltar: associa handlers a elementos com a classe .back-btn
+// e exporta a função para uso direto.
+export function initBackButtons(root = document) {
+  try {
+    if (typeof window !== 'undefined') window.goBack = goBack;
+  } catch (e) {
+    // ignore
+  }
+
+  const rootEl = (typeof root === 'string') ? document.querySelector(root) : (root || document);
+  if (!rootEl) return;
+
+  const elems = Array.from(rootEl.querySelectorAll('.back-btn'));
+  elems.forEach((btn) => {
+    try {
+      btn.addEventListener('click', goBack);
+    } catch (err) {
+      // ignore
+    }
+  });
+}
