@@ -71,49 +71,280 @@ class AuthController
                 echo json_encode([
                     'success' => true,
                     'token' => $sessionData['token'],
-                    'usuario' => $resultado['usuario'],
-                    'redirect' => $redirect
+                    'redirect' => $redirect,
+                    'user' => $resultado['usuario']
                 ]);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Erro ao criar sessão']);
             }
         } else {
-            echo json_encode([
-                'success' => false, 
-                'message' => $resultado['message']
-            ]);
+            echo json_encode($resultado);
         }
         exit;
     }
-    
+
     public function logout()
     {
-        header('Content-Type: application/json; charset=utf-8');
-        
-        try {
-            $headers = apache_request_headers();
-            $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : null;
-            
-            if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-                $token = $matches[1];
-                \App\Models\Sessao::desativarPorToken($token);
-            } else {
-                // Tentar obter o token do cookie
-                if (isset($_COOKIE['authToken'])) {
-                    $token = $_COOKIE['authToken'];
-                    \App\Models\Sessao::desativarPorToken($token);
-                }
-            }
-        } catch (\Exception $e) {
-            // Log do erro mas continua o processo de logout
-            error_log("Erro ao desativar sessão: " . $e->getMessage());
-        }
-        
-        // Limpar o cookie de autenticação
-        setcookie('authToken', '', time() - 3600, '/projetos/dashboard/');
-        
-        // Retornar resposta de sucesso
+        // Remover o cookie de autenticação
+        setcookie('authToken', '', [
+            'expires' => time() - 3600,
+            'path' => '/projetos/dashboard/',
+            'secure' => false,
+            'samesite' => 'Lax'
+        ]);
+
         echo json_encode(['success' => true, 'message' => 'Logout realizado com sucesso']);
         exit;
+    }
+    
+    // Método para lidar com cadastro via convite
+    public function cadastroViaConvite()
+    {
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        // Pegar o hash do convite da URL ou do input
+        $hashAnfitriao = $_GET['hash'] ?? $input['hashAnfitriao'] ?? null;
+        $tipoPerfil = $_GET['tipo'] ?? $input['tipoPerfil'] ?? 'cliente'; // Padrão é 'cliente'
+        
+        if (!$hashAnfitriao) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Hash do convite não fornecido']);
+            exit;
+        }
+        
+        // Verificar se o hash do anfitrião é válido
+        $perfilAnfitriao = Usuario::buscarPerfilPorHashConvite($hashAnfitriao);
+        if (!$perfilAnfitriao) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Hash de convite inválido']);
+            exit;
+        }
+        
+        try {
+            // Iniciar transação
+            $pdo = \Config\Database::getConnection();
+            $pdo->beginTransaction();
+
+            // Fazer o cadastro normal do usuário SEM criar perfil padrão
+            $usuarioId = $this->cadastrarUsuarioSemPerfilPadrao($input, $hashAnfitriao);
+            
+            if ($usuarioId) {
+                // Agora criar o perfil específico com base no tipo informado
+                $this->criarPerfilEspecifico($usuarioId, $tipoPerfil, $hashAnfitriao);
+                
+                // Definir esse perfil como ativo
+                $perfil = $this->obterPerfilPorPapel($usuarioId, $tipoPerfil);
+                if ($perfil) {
+                    $this->definirPerfilAtivoManual($usuarioId, $perfil['perfil_id']);
+                }
+                
+                // Após o cadastro, fazer login automático
+                $email = $input['email'];
+                $senha = $input['senha'];
+                
+                $resultado = Usuario::login($email, $senha);
+                
+                if (isset($resultado['success']) && $resultado['success'] && isset($resultado['token'])) {
+                    // Definir o cookie com a nova sessão
+                    setcookie('authToken', $resultado['token'], [
+                        'expires' => time() + (defined('JWT_EXPIRE') ? JWT_EXPIRE : 120), // 2 minutos por padrão
+                        'path' => '/projetos/dashboard/',
+                        'secure' => false,
+                        'samesite' => 'Lax'
+                    ]);
+                }
+                
+                // Confirmar transação
+                $pdo->commit();
+                
+                // Obter o nível do usuário através do perfil ativo
+                $usuario = Usuario::buscarPorId($usuarioId);
+                $nivel = isset($usuario['papel_nivel']) ? $usuario['papel_nivel'] : 'cliente';
+                $redirectUrl = getRotaPorUserNivel($nivel);
+
+                \App\Models\Log::registrar(
+                    $usuarioId,
+                    'Cadastro via convite',
+                    "Usuário ID: $usuarioId, Convidado por perfil ID: {$perfilAnfitriao['id']}, Tipo de perfil: $tipoPerfil"
+                );
+
+                json_response([
+                    'success' => true,
+                    'id' => $usuarioId,
+                    'token' => isset($resultado['token']) ? $resultado['token'] : null,
+                    'user' => isset($resultado['usuario']) ? $resultado['usuario'] : null,
+                    'redirect' => $redirectUrl
+                ]);
+            } else {
+                $pdo->rollback();
+                throw new \Exception("Erro ao cadastrar usuário via convite");
+            }
+        } catch (\Exception $e) {
+            error_log("Erro no cadastro via convite: " . $e->getMessage());
+            json_response(['success' => false, 'message' => $e->getMessage()], 400);
+        }
+    }
+    
+    // Método auxiliar para cadastrar usuário sem criar perfil padrão
+    private function cadastrarUsuarioSemPerfilPadrao($dados, $hashAnfitriao = null)
+    {
+        $pdo = \Config\Database::getConnection();
+        
+        $nome = trim($dados['nome'] ?? '');
+        $email = trim($dados['email'] ?? '');
+        $senha = trim($dados['senha'] ?? '');
+        $cpf = trim($dados['cpf'] ?? '');
+        $telefone = trim($dados['telefone'] ?? '');
+
+        // Validação básica
+        if (empty($nome) || empty($email) || empty($senha)) {
+            throw new \Exception('Nome, e-mail e senha são obrigatórios.');
+        }
+
+        // Verifica se o e-mail já está cadastrado
+        if (Usuario::buscarPorEmail($email)) {
+            throw new \Exception('E-mail já cadastrado.');
+        }
+
+        // Hash the password before storing
+        $senha_hashed = password_hash($senha, PASSWORD_DEFAULT);
+
+        $stmt = $pdo->prepare("
+            INSERT INTO integra_usuarios (nome, email, senha, cpf, telefone)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([$nome, $email, $senha_hashed, $cpf, $telefone]);
+        
+        return $pdo->lastInsertId();
+    }
+    
+    // Método auxiliar para criar o perfil específico
+    private function criarPerfilEspecifico($usuarioId, $papelNivel, $hashAnfitriao)
+    {
+        $pdo = \Config\Database::getConnection();
+        
+        // Obter o ID do papel
+        $papelStmt = $pdo->prepare("SELECT id FROM integra_papeis WHERE nivel = ?");
+        $papelStmt->execute([$papelNivel]);
+        $papel = $papelStmt->fetch();
+        
+        if (!$papel) {
+            throw new \Exception("Papel '$papelNivel' não encontrado.");
+        }
+        
+        // Gerar hash de convite para o novo perfil
+        $hashConvite = Usuario::gerarHash();
+        
+        // Criar perfil para o usuário com hashAnfitriao e hashConvite
+        $perfilStmt = $pdo->prepare("
+            INSERT INTO integra_perfis (id_papel, id_usuario, creditos, hashConvite, hashAnfitriao, status)
+            VALUES (?, ?, 0.00, ?, ?, 'Ativo')
+        ");
+        $perfilStmt->execute([$papel['id'], $usuarioId, $hashConvite, $hashAnfitriao]);
+        
+        return $pdo->lastInsertId();
+    }
+    
+    // Método auxiliar para definir o perfil ativo
+    private function definirPerfilAtivoManual($usuarioId, $perfilId)
+    {
+        $pdo = \Config\Database::getConnection();
+        
+        // Atualizar o perfil ativo do usuário
+        $updateStmt = $pdo->prepare("
+            UPDATE integra_usuarios 
+            SET idPerfilAtivo = ? 
+            WHERE id = ?
+        ");
+        $updateStmt->execute([$perfilId, $usuarioId]);
+        
+        // Atualizar o contexto do usuário
+        \App\Utils\UserContext::setNivelAtivo($this->getNivelPerfil($perfilId));
+    }
+    
+    // Método auxiliar para obter o nível do perfil
+    private function getNivelPerfil($perfilId)
+    {
+        $pdo = \Config\Database::getConnection();
+        $stmt = $pdo->prepare("
+            SELECT p.nivel
+            FROM integra_perfis ip
+            JOIN integra_papeis p ON ip.id_papel = p.id
+            WHERE ip.id = ?
+        ");
+        $stmt->execute([$perfilId]);
+        $result = $stmt->fetch();
+        
+        return $result ? $result['nivel'] : 'cliente';
+    }
+    
+    // Método para obter o perfil por papel
+    private function obterPerfilPorPapel($usuarioId, $papelNivel)
+    {
+        $perfis = Usuario::getPapeisDoUsuario($usuarioId);
+        foreach ($perfis as $perfil) {
+            if ($perfil['nivel'] === $papelNivel) {
+                return $perfil;
+            }
+        }
+        return null;
+    }
+    
+    // Método para gerar link de convite
+    public function gerarLinkConvite()
+    {
+        try {
+            // Verificar autenticação
+            $usuario = \App\Middleware\AuthMiddleware::verificar();
+            
+            // Buscar o perfil ativo do usuário
+            $perfilAtivo = Usuario::buscarPorId($usuario['id']);
+            
+            if ($perfilAtivo && isset($perfilAtivo['hashConvite'])) {
+                $link = $_SERVER['HTTP_HOST'] . '/projetos/dashboard/cadastro-via-convite?hash=' . $perfilAtivo['hashConvite'];
+                
+                json_response([
+                    'success' => true,
+                    'link' => $link,
+                    'hash' => $perfilAtivo['hashConvite']
+                ]);
+            } else {
+                json_response(['success' => false, 'message' => 'Perfil não encontrado'], 404);
+            }
+        } catch (\Exception $e) {
+            json_response(['success' => false, 'message' => $e->getMessage()], 400);
+        }
+    }
+    
+    // Método para mostrar o formulário de cadastro via convite
+    public function mostrarCadastroViaConvite()
+    {
+        $hash = $_GET['hash'] ?? null;
+        $tipo = $_GET['tipo'] ?? 'cliente'; // Padrão é cliente
+        
+        if (!$hash) {
+            // Se não tiver hash, redireciona para a página principal
+            header('Location: /projetos/dashboard/');
+            exit;
+        }
+        
+        // Verificar se o hash é válido
+        $perfilAnfitriao = Usuario::buscarPerfilPorHashConvite($hash);
+        if (!$perfilAnfitriao) {
+            // Se o hash for inválido, redireciona para a página principal
+            header('Location: /projetos/dashboard/');
+            exit;
+        }
+        
+        // Mostrar o formulário de cadastro com informações do anfitrião
+        $data = [
+            'title' => 'Cadastro via Convite',
+            'anfitriao' => $perfilAnfitriao['nome'],
+            'hash' => $hash,
+            'tipo' => $tipo,
+            'ignorarAutenticacao' => true // Permite acesso sem autenticação
+        ];
+        
+        view('recursos/usuarios/cadastro-usuario-via-convite', $data);
     }
 }

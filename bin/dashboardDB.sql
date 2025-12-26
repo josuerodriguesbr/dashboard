@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 16-Dez-2025 às 23:29
+-- Tempo de geração: 23-Dez-2025 às 12:45
 -- Versão do servidor: 10.4.25-MariaDB
 -- versão do PHP: 7.4.30
 
@@ -113,6 +113,8 @@ CREATE TABLE `integra_perfis` (
   `id_papel` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
   `creditos` decimal(15,2) DEFAULT 0.00,
+  `hashConvite` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `hashAnfitriao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` enum('Ativo','Bloqueado') COLLATE utf8mb4_unicode_ci DEFAULT 'Ativo',
   `createdAt` datetime DEFAULT current_timestamp(),
   `updatedAt` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -190,29 +192,6 @@ CREATE TABLE `integra_usuarios` (
   `updatedAt` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `idPerfilAtivo` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Acionadores `integra_usuarios`
---
-DELIMITER $$
-DROP TRIGGER IF EXISTS `trg_novo_usuario_perfil_cliente`$$
-CREATE TRIGGER `trg_novo_usuario_perfil_cliente` AFTER INSERT ON `integra_usuarios` FOR EACH ROW BEGIN
-    DECLARE papel_cliente_id INT;
-    
-    -- Obter o ID do papel 'cliente'
-    SELECT id INTO papel_cliente_id 
-    FROM integra_papeis 
-    WHERE nivel = 'cliente' 
-    LIMIT 1;
-    
-    -- Se o papel 'cliente' existir, criar um perfil para o novo usuário
-    IF papel_cliente_id IS NOT NULL THEN
-        INSERT INTO integra_perfis (id_papel, id_usuario, creditos, status)
-        VALUES (papel_cliente_id, NEW.id, 0.00, 'Ativo');
-    END IF;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 

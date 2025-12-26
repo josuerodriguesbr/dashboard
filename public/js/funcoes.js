@@ -12,6 +12,63 @@ export function somenteDigitos(s) {
   return String(s).replace(/\D/g, '');
 }
 
+// Função para exibir notificações
+export function mostrarNotificacao(mensagem, tipo = 'info', duracao = 5000) {
+  // Certificar-se de que o container existe
+  const container = document.getElementById('feedback-container');
+  if (!container) {
+    console.error('Container para notificações não encontrado!');
+    return;
+  }
+
+  // Criar elemento da notificação
+  const notificacao = document.createElement('div');
+  notificacao.className = `feedback-mensagem feedback-${tipo}`;
+  notificacao.innerHTML = `
+    <div class="feedback-conteudo">${mensagem}</div>
+    <button class="feedback-fechar" title="Fechar">×</button>
+    ${duracao > 0 ? '<div class="feedback-progresso"><div class="feedback-progresso-barra"></div></div>' : ''}
+  `;
+
+  // Adicionar evento para fechar a notificação ao clicar nela
+  notificacao.addEventListener('click', function(e) {
+    if (e.target.classList.contains('feedback-fechar') || e.target.classList.contains('feedback-conteudo') || e.target === notificacao) {
+      fecharNotificacao(notificacao);
+    }
+  });
+
+  // Adicionar a notificação ao container
+  container.appendChild(notificacao);
+
+  // Animação de entrada
+  setTimeout(() => {
+    notificacao.style.transform = 'translateX(0)';
+    notificacao.style.opacity = '1';
+  }, 10);
+
+  // Fechar automaticamente após o tempo especificado
+  if (duracao > 0) {
+    setTimeout(() => {
+      fecharNotificacao(notificacao);
+    }, duracao);
+  }
+
+  // Função para fechar a notificação
+  function fecharNotificacao(element) {
+    element.style.transform = 'translateX(150%)';
+    element.style.opacity = '0';
+    element.style.maxHeight = '0';
+    element.style.marginBottom = '0';
+    element.style.overflow = 'hidden';
+
+    setTimeout(() => {
+      if (element.parentNode) {
+        element.parentNode.removeChild(element);
+      }
+    }, 300);
+  }
+}
+
 // Attacha listeners de CPF ao elemento identificado por selector (padrão '#cpf').
 // Retorna true se o elemento foi encontrado e listeners adicionados.
 export function attachCpfListener(selector = '#cpf') {

@@ -61,9 +61,6 @@
 
             </form>
             <div id="errorMessage" class="mensagem-erro oculta"></div>
-            <div class="link-primario">
-                <a href="/projetos/dashboard/mostra-cadastro-usuario">Não tem conta? Cadastre-se</a>
-            </div>
 
         </section>
         
@@ -86,10 +83,3 @@
 $title = 'Login';
 $logo_icone = '🔐';
 $logo_titulo = 'Área Restrita';
-$page_js_module = '/projetos/dashboard/public/js/recursos/usuarios/login.js';
-
-// Inclui o conteúdo HTML da página.
-// A função view() que chama este arquivo irá capturar a saída.
-// O controller especifica 'semLayout' => true, então o layout principal não será usado.
-include ROOT . 'app/Views/recursos/usuarios/login.html';
-

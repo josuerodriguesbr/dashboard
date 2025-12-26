@@ -1,6 +1,6 @@
 // /app/Views/recursos/usuarios/cadastro-usuario.js
 
-import { focusFirstVisible, attachCpfListener } from '/projetos/dashboard/public/js/funcoes.js';
+import { focusFirstVisible, attachCpfListener, mostrarNotificacao } from '/projetos/dashboard/public/js/funcoes.js';
 
 focusFirstVisible(); // Foca o primeiro campo do formulário
 
@@ -10,9 +10,9 @@ document.getElementById('formCadastroUsuario').addEventListener('submit', async 
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
-    const status = document.getElementById('status');
-    status.textContent = 'Cadastrando...';
-    status.className = 'status';
+
+    // Exibe notificação de processamento
+    mostrarNotificacao('Cadastrando...', 'info', 3000);
 
     try {
         const res = await fetch('/projetos/dashboard/cadastro-usuario', {
@@ -44,12 +44,6 @@ document.getElementById('formCadastroUsuario').addEventListener('submit', async 
             status.className = 'status error';
         }
     } catch (error) {
-        status.textContent = '❌ Erro: ' + error.message;
-        status.className = 'status error';
+        mostrarNotificacao('❌ Erro: ' + error.message, 'erro', 5000);
     }
-
-    setTimeout(() => { 
-        status.textContent = ''; 
-        status.className = 'status';
-    }, 10000);
 });

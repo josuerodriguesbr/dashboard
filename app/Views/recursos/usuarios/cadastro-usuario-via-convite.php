@@ -1,9 +1,9 @@
 <?php
-// /app/Views/recursos/usuarios/cadastro-usuario.php
+// /app/Views/recursos/usuarios/cadastro-usuario-via-convite.php
 
 $logo_icone = '➕';
-$logo_titulo = 'Cadastro Usuário';
-$page_js_module = '/projetos/dashboard/public/js/recursos/usuarios/cadastro-usuario.js';
+$logo_titulo = 'Cadastro via Convite';
+$page_js_module = '/projetos/dashboard/public/js/recursos/usuarios/cadastro-usuario-via-convite.js';
 
 // Garantir que o CSS seja carregado
 if (!defined('CSS_PADRAO')) {
@@ -13,4 +13,4 @@ if (!defined('CSS_PADRAO')) {
 // Inclui o conteúdo HTML da página.
 // A função view() que chama este arquivo irá capturar a saída
 // e inseri-la na variável $content do layout.php.
-include ROOT . 'app/Views/recursos/usuarios/cadastro-usuario.html';
+include ROOT . 'app/Views/recursos/usuarios/cadastro-usuario-via-convite.html';

@@ -13,9 +13,9 @@ function getBaseUrl() {
 }
 
 function json_response($data, $status = 200) {
-    // 🔥 Força o envio imediato
+    // Limpar todos os buffers de saída sem enviá-los
     while (ob_get_level()) {
-        ob_end_flush(); // Libera todos os buffers
+        ob_end_clean(); // Descarta o conteúdo do buffer sem enviar
     }
 
     http_response_code($status);
@@ -25,7 +25,6 @@ function json_response($data, $status = 200) {
     
     // Garante que será enviado
     echo $json;
-    flush(); // Força o envio para o navegador
     exit;
 }
 

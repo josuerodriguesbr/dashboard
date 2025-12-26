@@ -1,35 +1,38 @@
-// public/js/admin/dashboard.js
+// Exemplo de uso da função de notificação no dashboard admin
 
-const rotas = ['server-logs', 'db-monitor', 'frontend'];
+// Importar a função de notificação do módulo de funções
+import { mostrarNotificacao } from '/projetos/dashboard/public/js/funcoes.js';
 
-rotas.forEach(rota => {
-    fetch('/projetos/dashboard/' + rota, {
-        method: 'GET',
-        credentials: 'same-origin' // Garante que cookies são enviados
-    })
-    .then(response => {
-        if (response.status === 401 || response.status === 403) {
-            console.error('❌ Acesso negado para: ' + rota);
-            throw new Error('Acesso negado');
-        }
-        if (!response.ok) {
-            throw new Error('Erro ao carregar ' + rota + ': ' + response.status);
-        }
-        return response.text();
-    })
-    .then(html => {
-        const id = rota.replace('-', '');
-        const container = document.getElementById(id);
-        if (container) {
-            container.innerHTML = html;
-        }
-    })
-    .catch(err => {
-        console.error('Erro ao carregar:', rota, err);
-        const id = rota.replace('-', '');
-        const container = document.getElementById(id);
-        if (container) {
-            container.innerHTML = '<p>Erro ao carregar conteúdo</p>';
-        }
-    });
+// Exemplo de como usar a função de notificação em diferentes situações
+document.addEventListener('DOMContentLoaded', function() {
+    // Exemplo: Exibir uma notificação de boas-vindas
+    mostrarNotificacao('Bem-vindo ao painel de administração!', 'info', 5000);
+    
+    // Exemplo de notificação de sucesso
+    // mostrarNotificacao('Operação realizada com sucesso!', 'sucesso', 3000);
+    
+    // Exemplo de notificação de erro
+    // mostrarNotificacao('Ocorreu um erro ao processar a solicitação.', 'erro', 5000);
+    
+    // Exemplo de notificação de alerta
+    // mostrarNotificacao('Atenção: Verifique as informações antes de continuar.', 'alerta', 4000);
+    
+    // Você pode chamar a função mostrarNotificacao em qualquer parte do código
+    // quando precisar notificar o usuário sobre algo
+    
+    // Exemplo de uso em uma ação de formulário
+    /*
+    const form = document.getElementById('meuFormulario');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Simular processamento
+            // ...
+            
+            // Mostrar notificação de sucesso
+            mostrarNotificacao('Dados salvos com sucesso!', 'sucesso', 4000);
+        });
+    }
+    */
 });

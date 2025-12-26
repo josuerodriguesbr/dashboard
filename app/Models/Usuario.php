@@ -10,7 +10,7 @@ class Usuario
         $pdo = Database::getConnection();
         try {
             $stmt = $pdo->prepare("
-                SELECT u.*, p.status as perfil_status, p.creditos as perfil_creditos, pa.nivel as papel_nivel
+                SELECT u.*, p.status as perfil_status, p.creditos as perfil_creditos, p.hashConvite, p.hashAnfitriao, pa.nivel as papel_nivel
                 FROM integra_usuarios u
                 LEFT JOIN integra_perfis p ON u.idPerfilAtivo = p.id
                 LEFT JOIN integra_papeis pa ON p.id_papel = pa.id
@@ -30,14 +30,30 @@ class Usuario
         $pdo = Database::getConnection();
         try {
             $stmt = $pdo->prepare("
-                SELECT u.*, p.status as perfil_status, p.creditos as perfil_creditos, pa.nivel as papel_nivel
+                SELECT u.*, p.nivel as papel_nivel, ip.status as perfil_status, ip.creditos, ip.hashConvite, ip.hashAnfitriao
                 FROM integra_usuarios u
-                LEFT JOIN integra_perfis p ON u.idPerfilAtivo = p.id
-                LEFT JOIN integra_papeis pa ON p.id_papel = pa.id
+                LEFT JOIN integra_perfis ip ON u.idPerfilAtivo = ip.id
+                LEFT JOIN integra_papeis p ON ip.id_papel = p.id
                 WHERE u.id = ?
             ");
             $stmt->execute([$id]);
-            return $stmt->fetch();
+            $usuario = $stmt->fetch();
+            
+            if ($usuario) {
+                // Definir o contexto do usuário
+                \App\Utils\UserContext::setUsuario([
+                    'id' => $usuario['id'],
+                    'nome' => $usuario['nome'],
+                    'email' => $usuario['email'],
+                    'nivel' => $usuario['papel_nivel'] ?? 'cliente', // Padrão é 'cliente'
+                    'status' => $usuario['perfil_status'],
+                    'creditos' => $usuario['creditos'],
+                    'hashConvite' => $usuario['hashConvite'],
+                    'hashAnfitriao' => $usuario['hashAnfitriao']
+                ]);
+            }
+            
+            return $usuario;
         } catch (\Exception $e) {
             error_log("Usuario::buscarPorId falhou: " . $e->getMessage());
             return false;
@@ -49,7 +65,7 @@ class Usuario
         $pdo = Database::getConnection();
         try {
             $stmt = $pdo->prepare("
-                SELECT u.*, p.status as perfil_status, p.creditos as perfil_creditos, pa.nivel as papel_nivel
+                SELECT u.*, p.status as perfil_status, p.creditos as perfil_creditos, p.hashConvite, p.hashAnfitriao, pa.nivel as papel_nivel
                 FROM integra_usuarios u
                 LEFT JOIN integra_perfis p ON u.idPerfilAtivo = p.id
                 LEFT JOIN integra_papeis pa ON p.id_papel = pa.id
@@ -63,8 +79,13 @@ class Usuario
         }
     }
 
-    // In the cadastrar method (around line 45)
-    public static function cadastrar($dados)
+    // Função para gerar hash único
+    public static function gerarHash()
+    {
+        return bin2hex(random_bytes(32)); // 64 caracteres hexadecimais
+    }
+
+    public static function cadastrar($dados, $hashAnfitriao = null)
     {
         $pdo = Database::getConnection();
         
@@ -99,45 +120,15 @@ class Usuario
             
             $usuario_id = $pdo->lastInsertId();
             
-            // Criar perfil 'cliente' para o novo usuário
-            if ($usuario_id) {
-                try {
-                    // Obter o ID do papel 'cliente'
-                    $papel_stmt = $pdo->prepare("SELECT id FROM integra_papeis WHERE nivel = 'cliente' LIMIT 1");
-                    $papel_stmt->execute();
-                    $papel = $papel_stmt->fetch();
-                    
-                    if ($papel) {
-                        // Criar perfil para o usuário
-                        $perfil_stmt = $pdo->prepare("
-                            INSERT INTO integra_perfis (id_papel, id_usuario, creditos, status)
-                            VALUES (?, ?, 0.00, 'Ativo')
-                        ");
-                        $perfil_stmt->execute([$papel['id'], $usuario_id]);
-                        
-                        $perfil_id = $pdo->lastInsertId();
-                        
-                        // Atualizar o campo idPerfilAtivo do usuário
-                        $update_stmt = $pdo->prepare("
-                            UPDATE integra_usuarios 
-                            SET idPerfilAtivo = ? 
-                            WHERE id = ?
-                        ");
-                        $update_stmt->execute([$perfil_id, $usuario_id]);
-                    }
-                } catch (\Exception $e) {
-                    // Ignorar erros de chave duplicada ou restrições de trigger
-                    error_log("Aviso: Erro ao criar perfil automático para usuário $usuario_id: " . $e->getMessage());
-                }
-            }
-            
             // Confirmar transação
             $pdo->commit();
 
             return $usuario_id;
         } catch (\Exception $e) {
             // Reverter transação em caso de erro
-            $pdo->rollback();
+            if ($pdo->inTransaction()) {
+                $pdo->rollback();
+            }
             error_log("Usuario::cadastrar falhou: " . $e->getMessage());
             throw $e;
         }
@@ -215,7 +206,7 @@ public static function atualizar($id, $dados)
             // Consulta mais abrangente para pegar todos os perfis do usuário
             $stmt = $pdo->prepare("
                 SELECT u.id, u.nome, u.email, u.senha, u.idPerfilAtivo,
-                       p.status as perfil_status, pa.nivel as papel_nivel, p.id as perfil_id
+                       p.status as perfil_status, p.hashConvite, p.hashAnfitriao, pa.nivel as papel_nivel, p.id as perfil_id
                 FROM integra_usuarios u
                 LEFT JOIN integra_perfis p ON u.idPerfilAtivo = p.id
                 LEFT JOIN integra_papeis pa ON p.id_papel = pa.id
@@ -243,7 +234,7 @@ public static function atualizar($id, $dados)
                         
                         // Verificar se existe algum perfil para este usuário
                         $perfisStmt = $pdo->prepare("
-                            SELECT p.id, p.status, pa.nivel, pa.descricao
+                            SELECT p.id, p.status, p.hashConvite, p.hashAnfitriao, pa.nivel as papel_nivel, pa.descricao
                             FROM integra_perfis p
                             JOIN integra_papeis pa ON p.id_papel = pa.id
                             WHERE p.id_usuario = ? AND p.status = 'Ativo'
@@ -262,7 +253,7 @@ public static function atualizar($id, $dados)
                             // Recarregar os dados do usuário
                             $stmt = $pdo->prepare("
                                 SELECT u.id, u.nome, u.email, u.senha, u.idPerfilAtivo,
-                                       p.status as perfil_status, pa.nivel as papel_nivel, p.id as perfil_id
+                                       p.status as perfil_status, p.hashConvite, p.hashAnfitriao, pa.nivel as papel_nivel, p.id as perfil_id
                                 FROM integra_usuarios u
                                 LEFT JOIN integra_perfis p ON u.idPerfilAtivo = p.id
                                 LEFT JOIN integra_papeis pa ON p.id_papel = pa.id
@@ -304,7 +295,9 @@ public static function atualizar($id, $dados)
                         UserContext::setPerfilAtivo([
                             'id' => $usuario['perfil_id'],
                             'nivel' => $nivel,
-                            'status' => $usuario['perfil_status'] ?? 'Ativo'
+                            'status' => $usuario['perfil_status'] ?? 'Ativo',
+                            'hashConvite' => $usuario['hashConvite'],
+                            'hashAnfitriao' => $usuario['hashAnfitriao']
                         ]);
                     }
                     
@@ -354,6 +347,15 @@ public static function atualizar($id, $dados)
                 $usuario = self::buscarPorId($resultado['payload']['id']);
                 if ($usuario && isset($usuario['papel_nivel'])) {
                     UserContext::setNivelAtivo($usuario['papel_nivel']);
+                    
+                    // Adicionando informações do perfil ao contexto
+                    UserContext::setPerfilAtivo([
+                        'id' => $usuario['idPerfilAtivo'],
+                        'nivel' => $usuario['papel_nivel'],
+                        'status' => $usuario['perfil_status'] ?? 'Ativo',
+                        'hashConvite' => $usuario['hashConvite'],
+                        'hashAnfitriao' => $usuario['hashAnfitriao']
+                    ]);
                 } else {
                     UserContext::setNivelAtivo('cliente');
                 }
@@ -391,7 +393,7 @@ public static function atualizar($id, $dados)
         $pdo = Database::getConnection();
         try {
             $stmt = $pdo->prepare("
-                SELECT u.*, p.status as perfil_status, p.creditos as perfil_creditos, pa.nivel as papel_nivel
+                SELECT u.*, p.status as perfil_status, p.creditos as perfil_creditos, p.hashConvite, p.hashAnfitriao, pa.nivel as papel_nivel
                 FROM integra_usuarios u
                 LEFT JOIN integra_perfis p ON u.idPerfilAtivo = p.id
                 LEFT JOIN integra_papeis pa ON p.id_papel = pa.id
@@ -409,7 +411,7 @@ public static function atualizar($id, $dados)
         $pdo = Database::getConnection();
         try {
             $stmt = $pdo->prepare("
-                SELECT pa.nivel, pa.descricao, p.status as perfil_status, p.creditos, p.id as perfil_id
+                SELECT pa.nivel, pa.descricao, p.status as perfil_status, p.creditos, p.id as perfil_id, p.hashConvite, p.hashAnfitriao
                 FROM integra_perfis p
                 JOIN integra_papeis pa ON p.id_papel = pa.id
                 WHERE p.id_usuario = ?
@@ -422,10 +424,12 @@ public static function atualizar($id, $dados)
         }
     }
     
-    public static function adicionarPapelAoUsuario($usuarioId, $papelNivel)
+    public static function adicionarPapelAoUsuario($usuarioId, $papelNivel, $hashAnfitriao = null)
     {
         $pdo = Database::getConnection();
         try {
+            $pdo->beginTransaction();
+            
             // Verificar se o usuário já tem este papel
             $checkStmt = $pdo->prepare("
                 SELECT p.id
@@ -438,6 +442,7 @@ public static function atualizar($id, $dados)
             
             // Se já tiver o papel, não faz nada
             if ($perfilExistente) {
+                $pdo->commit();
                 return true;
             }
             
@@ -447,18 +452,24 @@ public static function atualizar($id, $dados)
             $papel = $papelStmt->fetch();
             
             if (!$papel) {
+                $pdo->rollBack();
                 throw new \Exception("Papel '$papelNivel' não encontrado.");
             }
             
-            // Criar novo perfil
-            $insertStmt = $pdo->prepare("
-                INSERT INTO integra_perfis (id_papel, id_usuario, creditos, status)
-                VALUES (?, ?, 0.00, 'Ativo')
-            ");
-            $insertStmt->execute([$papel['id'], $usuarioId]);
+            // Gerar hash de convite para o novo perfil
+            $hashConvite = self::gerarHash();
             
+            // Criar novo perfil com hashAnfitriao e hashConvite
+            $insertStmt = $pdo->prepare("
+                INSERT INTO integra_perfis (id_papel, id_usuario, creditos, hashConvite, hashAnfitriao, status)
+                VALUES (?, ?, 0.00, ?, ?, 'Ativo')
+            ");
+            $insertStmt->execute([$papel['id'], $usuarioId, $hashConvite, $hashAnfitriao]);
+            
+            $pdo->commit();
             return true;
         } catch (\Exception $e) {
+            $pdo->rollBack();
             error_log("Usuario::adicionarPapelAoUsuario falhou: " . $e->getMessage());
             throw $e;
         }
@@ -468,9 +479,11 @@ public static function atualizar($id, $dados)
     {
         $pdo = Database::getConnection();
         try {
+            $pdo->beginTransaction();
+            
             // Verificar se o perfil pertence ao usuário
             $checkStmt = $pdo->prepare("
-                SELECT p.id, pa.nivel as papel_nivel
+                SELECT p.id, p.hashConvite, p.hashAnfitriao, pa.nivel as papel_nivel
                 FROM integra_perfis p
                 JOIN integra_papeis pa ON p.id_papel = pa.id
                 WHERE p.id = ? AND p.id_usuario = ?
@@ -479,6 +492,7 @@ public static function atualizar($id, $dados)
             $perfil = $checkStmt->fetch();
             
             if (!$perfil) {
+                $pdo->rollBack();
                 throw new \Exception("Perfil inválido ou não pertence ao usuário.");
             }
             
@@ -491,17 +505,60 @@ public static function atualizar($id, $dados)
             $updateStmt->execute([$perfilId, $usuarioId]);
             
             // Atualizar o contexto do usuário
-            UserContext::setNivelAtivo($perfil['papel_nivel']);
-            UserContext::setPerfilAtivo([
+            \App\Utils\UserContext::setNivelAtivo($perfil['papel_nivel']);
+            \App\Utils\UserContext::setPerfilAtivo([
                 'id' => $perfil['id'],
                 'nivel' => $perfil['papel_nivel'],
-                'status' => 'Ativo'
+                'status' => 'Ativo',
+                'hashConvite' => $perfil['hashConvite'],
+                'hashAnfitriao' => $perfil['hashAnfitriao']
             ]);
             
+            $pdo->commit();
             return true;
         } catch (\Exception $e) {
+            $pdo->rollBack();
             error_log("Usuario::definirPerfilAtivo falhou: " . $e->getMessage());
             throw $e;
+        }
+    }
+    
+    // Método para buscar um perfil pelo hashConvite
+    public static function buscarPerfilPorHashConvite($hashConvite)
+    {
+        $pdo = Database::getConnection();
+        try {
+            $stmt = $pdo->prepare("
+                SELECT p.*, u.nome, u.email, pa.nivel as papel_nivel
+                FROM integra_perfis p
+                JOIN integra_usuarios u ON p.id_usuario = u.id
+                JOIN integra_papeis pa ON p.id_papel = pa.id
+                WHERE p.hashConvite = ?
+            ");
+            $stmt->execute([$hashConvite]);
+            return $stmt->fetch();
+        } catch (\Exception $e) {
+            error_log("Usuario::buscarPerfilPorHashConvite falhou: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Método para obter o perfil ativo de um usuário
+    public static function getPerfilAtivo($usuarioId)
+    {
+        $pdo = Database::getConnection();
+        try {
+            $stmt = $pdo->prepare("
+                SELECT p.*, pa.nivel as papel_nivel
+                FROM integra_perfis p
+                JOIN integra_papeis pa ON p.id_papel = pa.id
+                WHERE p.id = (SELECT idPerfilAtivo FROM integra_usuarios WHERE id = ?)
+            ");
+            $stmt->execute([$usuarioId]);
+            return $stmt->fetch();
+        } catch (\Exception $e) {
+            error_log("Usuario::getPerfilAtivo falhou: " . $e->getMessage());
+            return false;
         }
     }
 }

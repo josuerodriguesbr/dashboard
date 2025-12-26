@@ -10,14 +10,6 @@ use App\Utils\JWT;
 
 class DashboardController
 {  
-    // Método para mostrar o formulário de cadastro
-    public function mostraCadastroUsuario()
-    {
-        $data = [
-            'title' => 'Cadastro de usuário'
-        ]; 
-        view('recursos/usuarios/cadastro-usuario', $data);
-    }
 
     public function mostraPerfilUsuario()
     {
@@ -113,60 +105,6 @@ class DashboardController
             exit;
         }
     }
-
-    public function cadastroUsuario()
-    {
-        $input = json_decode(file_get_contents('php://input'), true);
-
-        try {
-            $usuarioId = \App\Models\Usuario::cadastrar($input);
-            
-            if ($usuarioId) {
-                // Após o cadastro, fazer login automático
-                $email = $input['email'];
-                $senha = $input['senha'];
-                
-                // Usar o método login do model Usuario que verifica senha e cria sessão
-                $resultado = \App\Models\Usuario::login($email, $senha);
-
-                if (isset($resultado['success']) && $resultado['success'] && isset($resultado['token'])) {
-                    // Definir o cookie com a nova sessão
-                    setcookie('authToken', $resultado['token'], [
-                        'expires' => time() + (defined('JWT_EXPIRE') ? JWT_EXPIRE : 120), // 2 minutos por padrão
-                        'path' => '/projetos/dashboard/',
-                        'secure' => false, 
-                        'samesite' => 'Lax'
-                    ]);
-                }
-
-                // Obter o nível do usuário através do perfil ativo
-                $usuario = \App\Models\Usuario::buscarPorId($usuarioId);
-                $nivel = isset($usuario['papel_nivel']) ? $usuario['papel_nivel'] : 'cliente';
-                $redirectUrl = getRotaPorUserNivel($nivel);
-
-                \App\Models\Log::registrar(
-                    $usuarioId,
-                    'Cadastro e login automático',
-                    "Usuário ID: $usuarioId"
-                );            
-
-                json_response([
-                    'success' => true,
-                    'id' => $usuarioId,
-                    'token' => isset($resultado['token']) ? $resultado['token'] : null,
-                    'user' => isset($resultado['usuario']) ? $resultado['usuario'] : null,
-                    'redirect' => $redirectUrl
-                ]);
-            } else {
-                throw new Exception("Erro ao cadastrar usuário");
-            }
-    
-
-        } catch (Exception $e) {
-            json_response(['success' => false, 'message' => $e->getMessage()], 400);
-        }
-    }
-
 
     public function atualizaUsuario()
     {

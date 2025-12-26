@@ -1,5 +1,12 @@
+<form id="formCadastroUsuarioViaConvite" class="conteudo-centralizado" autocomplete="off" novalidate>
 
-<form id="formCadastroUsuario" class="conteudo-centralizado" autocomplete="off" novalidate>
+    <!-- Campo oculto para o hash do convite -->
+    <input type="hidden" id="hashAnfitriao" name="hashAnfitriao" value="<?= htmlspecialchars($hash ?? '') ?>">
+
+    <div class="info-convite">
+        <p>Você foi convidado por: <strong><?= htmlspecialchars($anfitriao ?? 'Usuário') ?></strong></p>
+        <p>Seu perfil será: <strong><?= ucfirst(htmlspecialchars($tipo ?? 'cliente')) ?></strong></p>
+    </div>
 
     <!-- Campos fictícios ocultos para evitar autofill do navegador -->
     <div style="position: absolute; left: -9999px; top: -9999px; height: 0; overflow: hidden;">
@@ -33,26 +40,12 @@
         <label for="telefone">Telefone</label>
         <input type="text" id="telefone" name="telefone" placeholder="(11) 99999-8888">
     </div>
-    <!-- 
-    <div class="campoDeOpcoes">
-        <label for="nivel">Tipo de Usuário</label>
-        <select name="nivel" id="nivel" required>
-            <option value="">Selecione um tipo</option>
-            <option value="admin">Administrador</option>
-            <option value="assinante">Assinante</option>
-            <option value="operador">Operador</option>
-            <option value="vendedor">Vendedor</option>
-            <option value="cliente" selected>Cliente</option>
-        </select>
-    </div>
-    -->
 
     <div class="grade-botao">
         <div></div> <!-- Célula vazia -->
-            <button type="submit" class="btn-primary">Cadastrar</button>
+            <button type="submit" class="btn-primary">Cadastrar via Convite</button>
         <div></div> <!-- Célula vazia -->
     </div>    
 
     <div class="status" id="status"></div>
 </form>
-

@@ -1,5 +1,5 @@
 // public/js/recursos/usuarios/perfil-usuario.js
-import { attachCpfListener, focusFirstVisible } from '/projetos/dashboard/public/js/funcoes.js';
+import { attachCpfListener, focusFirstVisible, mostrarNotificacao } from '/projetos/dashboard/public/js/funcoes.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Atach listeners
@@ -26,12 +26,10 @@ async function carregarPerfil() {
         if (result.success) {
             preencherFormulario(result.usuario);
         } else {
-            statusDiv.textContent = result.message || "Erro ao carregar perfil";
-            statusDiv.className = 'status error';
+            mostrarNotificacao(result.message || "Erro ao carregar perfil", 'erro', 5000);
         }
     } catch (error) {
-        statusDiv.textContent = "Erro ao conectar com o servidor";
-        statusDiv.className = 'status error';
+        mostrarNotificacao("Erro ao conectar com o servidor", 'erro', 5000);
         console.error('Erro:', error);
     }
 }
@@ -49,8 +47,8 @@ async function atualizarPerfil(event) {
         delete data.senha;
     }
     
-    statusDiv.textContent = "Atualizando...";
-    statusDiv.className = 'status';
+    // Exibe notificação de processamento
+    mostrarNotificacao("Atualizando perfil...", 'info', 3000);
     
     try {
         const response = await fetch('/projetos/dashboard/atualiza-usuario', {
@@ -73,8 +71,8 @@ async function atualizarPerfil(event) {
         }
         
         if (result.success) {
-            statusDiv.textContent = "✅ Perfil atualizado com sucesso!";
-            statusDiv.className = 'status success';
+            // Exibe notificação de sucesso
+            mostrarNotificacao("✅ Perfil atualizado com sucesso!", 'sucesso', 5000);
             
             // Atualizar o nome do usuário no cabeçalho
             const nomeUsuario = document.getElementById('nome').value;
@@ -96,23 +94,20 @@ async function atualizarPerfil(event) {
                 // Não recarregar a página, apenas mostrar mensagem de sucesso
             }, 1500);
         } else {
-            statusDiv.textContent = result.message || "Erro ao atualizar perfil";
-            statusDiv.className = 'status error';
+            mostrarNotificacao(result.message || "Erro ao atualizar perfil", 'erro', 5000);
         }
     } catch (error) {
-        statusDiv.textContent = "Erro ao conectar com o servidor: " + error.message;
-        statusDiv.className = 'status error';
+        mostrarNotificacao("Erro ao conectar com o servidor: " + error.message, 'erro', 5000);
         console.error('Erro:', error);
     }
 }
 
 function preencherFormulario(usuario) {
     document.getElementById('id').value = usuario.id || '';
-    document.getElementById('nome').value = usuario.nome || '';
+    document.getElementById('nome').value = usuario.nome || usuario.name || '';
     document.getElementById('email').value = usuario.email || '';
     document.getElementById('cpf').value = usuario.cpf || '';
     document.getElementById('telefone').value = usuario.telefone || '';
-    document.getElementById('senha').value = '';
     
     // Atualizar o nome do usuário no cabeçalho
     atualizarNomeUsuarioNoCabecalho(usuario.nome);

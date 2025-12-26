@@ -13,6 +13,27 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
+    <style>
+        /* Ocultar os elementos de status antigos, já que estamos usando o novo sistema de notificações */
+        .status {
+            display: none !important;
+        }
+        
+        .mensagem-sistema {
+            display: none !important;
+        }
+        
+        /* Ajustar posição do container de notificações */
+        .feedback-container {
+            position: fixed;
+            top: 70px !important; /* Garantir que as notificações apareçam abaixo do cabeçalho */
+            right: 20px;
+            z-index: 9999;
+            width: 320px;
+            max-width: calc(100vw - 40px);
+        }
+    </style>
+
 </head>
 <body>
 
@@ -85,13 +106,16 @@
             </div>
         </header>
 
+        <!-- Container para mensagens de notificação -->
+        <div id="feedback-container" class="feedback-container"></div>
+
         <section>
             <?= $content ?>
         </section>
-
+        
          <footer>
             &copy; <?= date('Y') ?> - Sistema de Integração
-        </footer>
+        </footer>         
 
     </div>
 
@@ -104,6 +128,66 @@ $__rota_dashboard = (is_array($usuario) && isset($usuario['nivel'])) ? getRotaPo
 ?>
 
 <script>
+    // Função para exibir notificações
+    function mostrarNotificacao(mensagem, tipo = 'info', duracao = 5000) {
+        // Certificar-se de que o container existe
+        const container = document.getElementById('feedback-container');
+        if (!container) {
+            console.error('Container para notificações não encontrado!');
+            return;
+        }
+
+        // Criar elemento da notificação
+        const notificacao = document.createElement('div');
+        notificacao.className = `feedback-mensagem feedback-${tipo}`;
+        notificacao.innerHTML = `
+            <div class="feedback-conteudo">${mensagem}</div>
+            <button class="feedback-fechar" title="Fechar">×</button>
+            ${duracao > 0 ? '<div class="feedback-progresso"><div class="feedback-progresso-barra"></div></div>' : ''}
+        `;
+
+        // Adicionar evento para fechar a notificação ao clicar nela
+        notificacao.addEventListener('click', function(e) {
+            if (e.target.classList.contains('feedback-fechar') || e.target.classList.contains('feedback-conteudo') || e.target === notificacao) {
+                fecharNotificacao(notificacao);
+            }
+        });
+
+        // Adicionar a notificação ao container
+        container.appendChild(notificacao);
+
+        // Animação de entrada
+        setTimeout(() => {
+            notificacao.style.transform = 'translateX(0)';
+            notificacao.style.opacity = '1';
+        }, 10);
+
+        // Fechar automaticamente após o tempo especificado
+        if (duracao > 0) {
+            setTimeout(() => {
+                fecharNotificacao(notificacao);
+            }, duracao);
+        }
+
+        // Função para fechar a notificação
+        function fecharNotificacao(element) {
+            element.style.transform = 'translateX(150%)';
+            element.style.opacity = '0';
+            element.style.maxHeight = '0';
+            element.style.marginBottom = '0';
+            element.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                if (element.parentNode) {
+                    element.parentNode.removeChild(element);
+                }
+            }, 300);
+        }
+    }
+
+    // Adicionando a função globalmente para ser acessível em todo o sistema
+    window.mostrarNotificacao = mostrarNotificacao;
+
     // Função para verificar token atualizado (COM DEBUG)
     function verificarTokenAtualizado() {
         console.log('[DEBUG] Executando verificarTokenAtualizado...');

@@ -118,13 +118,13 @@ header {
   left: 0;
   height: 60px;
   width: 100%;
-  z-index: 1000;
+  z-index: 1000; /* Reduzido para garantir que as notificações fiquem acima */
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #2c3e50;
   color: white;
-  padding: 1rem;
+  padding: 0.5rem; /* Reduzido o padding para manter o cabeçalho com altura mais previsível */
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
@@ -624,9 +624,9 @@ input, textarea, select {
 /* Container para mensagens flutuantes */
 .feedback-container {
   position: fixed;
-  top: 20px;
+  top: 70px; /* Ajustado para aparecer logo abaixo do cabeçalho que tem 60px de altura */
   right: 20px;
-  z-index: 9999;
+  z-index: 9999; /* Garantir que as notificações fiquem acima de todos os elementos */
   width: 320px;
   max-width: calc(100vw - 40px);
 }
@@ -642,6 +642,7 @@ input, textarea, select {
   transform: translateX(0);
   transition: all 0.3s ease-in-out;
   opacity: 1;
+  position: relative;
 }
 
 /* Estado inicial oculto (entra da direita) */
@@ -798,9 +799,13 @@ input, textarea, select {
   height: 100%;
   background-color: currentColor;
   width: 100%;
-  animation: progresso 5s linear forwards;
+  animation: progresso linear forwards;
 }
 
+@keyframes progresso {
+  from { width: 100%; }
+  to { width: 0%; }
+}
 
 
 /* ========================================
@@ -813,7 +818,7 @@ input, textarea, select {
   }
 
   .feedback-container {
-    top: 10px;
+    top: 70px; /* Ajuste para dispositivos móveis */
     right: 10px;
     left: 10px;
     width: auto;
@@ -822,7 +827,7 @@ input, textarea, select {
   .feedback-mensagem {
     padding: 0.75rem;
   }  
- 
+  
 }
 
 /* ========================================
@@ -837,7 +842,7 @@ input, textarea, select {
   }
 
   .container-pagina {
-    padding-top: calc(60px); /* Considera a margem do header no desktop */
+    padding-top: calc(60px + 1rem); /* Considera a altura do header no desktop */
   }
  
 }

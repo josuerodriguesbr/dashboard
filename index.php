@@ -17,17 +17,20 @@ $router = new Router();
 
 // Rotas públicas
 $router->get('/', [DashboardController::class, 'paginaInicial']);
-$router->get('/mostra-cadastro-usuario', [DashboardController::class, 'mostraCadastroUsuario']);
+// Removido: $router->get('/mostra-cadastro-usuario', [DashboardController::class, 'mostraCadastroUsuario']);
 $router->get('/perfil', [DashboardController::class, 'mostraPerfilUsuario']); // Nova rota
 $router->get('/logs', [DashboardController::class, 'logs']);
 $router->get('/server-logs', [DashboardController::class, 'serverLogs']);
 $router->get('/db-monitor', [DashboardController::class, 'dbMonitor']);
 $router->get('/frontend', [DashboardController::class, 'frontend']);
+$router->get('/cadastro-via-convite', [AuthController::class, 'mostrarCadastroViaConvite']); // Nova rota
 $router->post('/webhook/asaas', [WebhookController::class, 'handleAsaas']);
 
-$router->post('/cadastro-usuario', [DashboardController::class, 'cadastroUsuario']);
+// Removido: $router->post('/cadastro-usuario', [DashboardController::class, 'cadastroUsuario']);
+$router->post('/cadastro-via-convite', [AuthController::class, 'cadastroViaConvite']); // Nova rota
 $router->post('/atualiza-usuario', [DashboardController::class, 'atualizaUsuario']);
 $router->get('/perfil/carregar', [DashboardController::class, 'carregaPerfil']); // Nova rota
+$router->get('/gerar-link-convite', [AuthController::class, 'gerarLinkConvite']); // Nova rota
 
 // Rotas de autenticação
 $router->post('/login', [AuthController::class, 'login']);
@@ -68,13 +71,22 @@ $router->get('/verificar-token', function () {
 });
 
 // === Processa a URL com base no .htaccess ===
-$url = $_GET['url'] ?? '';
-$base = dirname($_SERVER['SCRIPT_NAME']);
-$base = ($base == '/' || $base == '\\') ? '' : $base;
+$path = $_SERVER['REQUEST_URI'] ?? '/';
 
-if ($base && strncmp($url, $base, strlen($base)) === 0) {
-    $url = substr($url, strlen($base));
+// Remover o prefixo do subdiretório para obter o caminho real
+$subdir = '/projetos/dashboard';
+if (strpos($path, $subdir) === 0) {
+    $path = substr($path, strlen($subdir));
+    if (empty($path)) {
+        $path = '/';
+    }
 }
-$url = ltrim($url, '/');
 
-$router->resolve($url, $_SERVER['REQUEST_METHOD']);
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+// Remover parâmetros da URL
+if (strpos($path, '?') !== false) {
+    $path = substr($path, 0, strpos($path, '?'));
+}
+
+$router->resolve($path, $method);

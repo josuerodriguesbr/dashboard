@@ -1,0 +1,18 @@
+{
+  "app_name": "Dashboard",
+  "env": "development",
+  "debug": true,
+  "base_url": "http://localhost/dashboard",
+  "database": {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "name": "dashboard_db",
+    "user": "root",
+    "password": ""
+  },
+  "jwt_secret": "change_this_secret",
+  "logging": {
+    "level": "info",
+    "path": "storage/logs/app.log"
+  }
+}

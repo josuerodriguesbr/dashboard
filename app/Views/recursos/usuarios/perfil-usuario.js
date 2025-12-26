@@ -1,4 +1,6 @@
 // /app/Views/recursos/usuarios/perfil-usuario.js
+import { mostrarNotificacao } from '/projetos/dashboard/public/js/funcoes.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     // Carregar os dados do usuário quando a página for carregada
     carregarDadosUsuario();
@@ -24,12 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function carregarDadosUsuario() {
-    const statusDiv = document.getElementById('status');
-    
-    // Mostrar mensagem de carregamento
-    statusDiv.textContent = "Carregando dados do perfil...";
-    statusDiv.className = "status";
-    statusDiv.style.display = "block";
+    // Mostrar notificação de carregamento
+    mostrarNotificacao("Carregando dados do perfil...", 'info', 3000);
     
     // Fazer requisição para carregar os dados do perfil
     fetch('/projetos/dashboard/perfil/carregar', {
@@ -43,22 +41,18 @@ function carregarDadosUsuario() {
     .then(data => {
         if (data.success) {
             preencherFormulario(data.usuario);
-            statusDiv.style.display = "none";
         } else {
-            statusDiv.textContent = data.message || "Erro ao carregar dados do perfil";
-            statusDiv.className = "status error";
+            mostrarNotificacao(data.message || "Erro ao carregar dados do perfil", 'erro', 5000);
         }
     })
     .catch(error => {
-        statusDiv.textContent = "Erro ao conectar com o servidor";
-        statusDiv.className = "status error";
+        mostrarNotificacao("Erro ao conectar com o servidor", 'erro', 5000);
         console.error('Erro:', error);
     });
 }
 
 function atualizarPerfil() {
     const form = document.getElementById('formPerfilUsuario');
-    const statusDiv = document.getElementById('status');
     
     // Obter dados do formulário
     const formData = new FormData(form);
@@ -74,10 +68,8 @@ function atualizarPerfil() {
         delete usuarioData.senha;
     }
     
-    // Mostrar mensagem de carregamento
-    statusDiv.textContent = "Atualizando perfil...";
-    statusDiv.className = "status";
-    statusDiv.style.display = "block";
+    // Mostrar notificação de carregamento
+    mostrarNotificacao("Atualizando perfil...", 'info', 3000);
     
     // Enviar dados para o servidor
     fetch('/projetos/dashboard/atualiza-usuario', {
@@ -91,27 +83,18 @@ function atualizarPerfil() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            statusDiv.textContent = "Perfil atualizado com sucesso!";
-            statusDiv.className = "status success";
+            mostrarNotificacao("✅ Perfil atualizado com sucesso!", 'sucesso', 5000);
             
             // Atualizar o nome do usuário no cabeçalho
             const nomeUsuario = document.getElementById('nome').value;
             atualizarNomeUsuarioNoCabecalho(nomeUsuario);
             
-            // Remover qualquer botão anterior se existir
-            const existingBtn = statusDiv.querySelector('.btn-dashboard');
-            if (existingBtn) {
-                existingBtn.remove();
-            }
-            
         } else {
-            statusDiv.textContent = data.message || "Erro ao atualizar perfil";
-            statusDiv.className = "status error";
+            mostrarNotificacao(data.message || "Erro ao atualizar perfil", 'erro', 5000);
         }
     })
     .catch(error => {
-        statusDiv.textContent = "Erro ao conectar com o servidor";
-        statusDiv.className = "status error";
+        mostrarNotificacao("Erro ao conectar com o servidor", 'erro', 5000);
         console.error('Erro:', error);
     });
 }
@@ -119,25 +102,29 @@ function atualizarPerfil() {
 // Função para preencher o formulário com dados do usuário
 function preencherFormulario(usuario) {
     document.getElementById('id').value = usuario.id || '';
-    document.getElementById('nome').value = usuario.nome || '';
+    document.getElementById('nome').value = usuario.nome || usuario.name || '';
     document.getElementById('email').value = usuario.email || '';
     document.getElementById('cpf').value = usuario.cpf || '';
     document.getElementById('telefone').value = usuario.telefone || '';
-    document.getElementById('nivel').value = usuario.nivel || 'cliente';
     
-    // Limpar campo de senha por segurança
-    document.getElementById('senha').value = '';
+    // Atualizar o nome do usuário no cabeçalho
+    atualizarNomeUsuarioNoCabecalho(usuario.nome);
 }
 
-// Função para atualizar o nome do usuário no cabeçalho
-function atualizarNomeUsuarioNoCabecalho(novoNome) {
+function atualizarNomeUsuarioNoCabecalho(nome) {
     const userNameElement = document.querySelector('.user-name');
     if (userNameElement) {
-        userNameElement.textContent = novoNome;
+        userNameElement.textContent = nome;
     }
-    
-    // Também atualizar a variável global window.usuario se existir
-    if (window.usuario) {
-        window.usuario.nome = novoNome;
+}
+
+function determinarDashboardUrl(nivel) {
+    const basePath = '/projetos/dashboard';
+    switch(nivel) {
+        case 'admin': return basePath + '/admin';
+        case 'assinante': return basePath + '/assinante';
+        case 'operador': return basePath + '/operador';
+        case 'vendedor': return basePath + '/vendedor';
+        default: return basePath + '/cliente';
     }
 }
