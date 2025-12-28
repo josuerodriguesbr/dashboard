@@ -325,7 +325,7 @@ $__rota_dashboard = (is_array($usuario) && isset($usuario['nivel'])) ? getRotaPo
     function initializeComponents() {
         initLogoutButton();
         initLogoLink();
-        // A verificação do token será feita pelo evento 'pageshow' para garantir a atualização constante.
+        // A verificação do token será feita pelo evento 'pageshow'. (COM DEBUG)
         // verificarTokenAtualizado(); 
         <?php if ($mostrarBotaoVoltar): ?>
         initBackButton();

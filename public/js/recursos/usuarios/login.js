@@ -25,7 +25,7 @@ async function verificarSessaoExistente() {
       data = JSON.parse(text);
     } catch (parseError) {
       console.error('Erro ao parsear JSON:', parseError);
-      console.error('Conteúdo recebido:', text);
+      console.error('Conteúdo recebido:', text.substring(0, 200) + '...'); // Limitar a exibição
       document.getElementById('loadingMessage')?.classList.add('oculta');
       document.getElementById('loginForm')?.classList.remove('oculta');
       return false;
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const text = await res.text();
-        console.log('Resposta do login:', text);
+        console.log('Resposta do login:', text.substring(0, 200) + '...'); // Limitar a exibição
         
         if (!text) {
           throw new Error('Resposta vazia do servidor');
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
           data = JSON.parse(text);
         } catch (parseError) {
           console.error('Erro ao parsear JSON:', parseError);
-          throw new Error('Resposta inválida do servidor: ' + text);
+          throw new Error('Resposta inválida do servidor.');
         }
 
         if (data.success) {
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (error) {
         console.error('Erro durante o login:', error);
         if (errorMessage) {
-          errorMessage.textContent = 'Erro ao fazer login: ' + error.message;
+          errorMessage.textContent = 'Erro ao fazer login. Por favor, tente novamente.';
           errorMessage.classList.remove('oculta');
         }
       }

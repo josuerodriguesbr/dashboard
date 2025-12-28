@@ -1,63 +1,32 @@
-<div class="layout-grade">
-    <!-- Cartão de Convites -->
-    <div class="card-convidar">
-        <div class="card-header">
-            <h2>Convidar Novos Usuários</h2>
-        </div>
-        <div class="card-body">
-            <p>Como administrador, você pode convidar novos usuários para o sistema.</p>
-            
-            <div class="convite-opcoes">
-                <label for="tipo-convite">Tipo de Usuário:</label>
-                <select id="tipo-convite" class="form-select">
-                    <option value="assinante">Assinante (padrão)</option>
-                    <option value="vendedor">Vendedor</option>
-                    <option value="operador">Operador</option>
-                    <option value="cliente">Cliente</option>
-                </select>
+<div class="container">
+    <h1>Dashboard do Administrador</h1>
+    <p>Você está no dashboard de Administrador</p>
+    
+    <div class="layout-grade">
+        <!-- Cartão de Créditos -->
+        <?php include ROOT . 'app/Views/recursos/cartoes/cartao-creditos.html'; ?>
+        
+        <!-- Cartão de Convites -->
+        <?php include ROOT . 'app/Views/recursos/cartoes/cartao-convidar.html'; ?>
+        
+        <!-- Cartão de Logs do Servidor -->
+        <div class="card-iframe">
+            <div class="card-header">
+                <h2>Logs do Servidor</h2>
             </div>
-            
-            <div class="convite-actions">
-                <button id="gerar-convite-btn" class="btn-primary">Gerar Link de Convite</button>
-            </div>
-            
-            <div id="link-convite-container" class="oculta">
-                <label for="link-convite">Link de Convite:</label>
-                <div class="input-group">
-                    <input type="text" id="link-convite" readonly>
-                    <button id="copiar-link-btn" class="btn-secundario">Copiar</button>
-                </div>
+            <div class="card-body">
+                <iframe src="/projetos/dashboard/server-logs" class="frame" id="server-logs-frame"></iframe>
             </div>
         </div>
-    </div>
 
-    <!-- Cartão de Logs do Servidor -->
-    <div class="card-iframe">
-        <div class="card-header">
-            <h2>Logs do Servidor</h2>
-        </div>
-        <div class="card-body">
-            <iframe src="/projetos/dashboard/server-logs" class="frame" id="server-logs-frame"></iframe>
-        </div>
-    </div>
-
-    <!-- Cartão de Monitoramento do DB -->
-    <div class="card-iframe">
-        <div class="card-header">
-            <h2>Monitoramento do Banco de Dados</h2>
-        </div>
-        <div class="card-body">
-            <iframe src="/projetos/dashboard/db-monitor" class="frame" id="db-monitor-frame"></iframe>
-        </div>
-    </div>
-
-    <!-- Cartão de Frontend -->
-    <div class="card-iframe">
-        <div class="card-header">
-            <h2>Playground de Integração</h2>
-        </div>
-        <div class="card-body">
-            <iframe src="/projetos/dashboard/frontend" class="frame" id="frontend-frame"></iframe>
+        <!-- Cartão de Monitoramento do DB -->
+        <div class="card-iframe">
+            <div class="card-header">
+                <h2>Monitoramento do Banco de Dados</h2>
+            </div>
+            <div class="card-body">
+                <iframe src="/projetos/dashboard/db-monitor" class="frame" id="db-monitor-frame"></iframe>
+            </div>
         </div>
     </div>
 </div>

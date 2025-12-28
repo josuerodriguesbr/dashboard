@@ -41,16 +41,18 @@ class Usuario
             
             if ($usuario) {
                 // Definir o contexto do usuário
-                \App\Utils\UserContext::setUsuario([
-                    'id' => $usuario['id'],
-                    'nome' => $usuario['nome'],
-                    'email' => $usuario['email'],
-                    'nivel' => $usuario['papel_nivel'] ?? 'cliente', // Padrão é 'cliente'
-                    'status' => $usuario['perfil_status'],
-                    'creditos' => $usuario['creditos'],
-                    'hashConvite' => $usuario['hashConvite'],
-                    'hashAnfitriao' => $usuario['hashAnfitriao']
-                ]);
+                if(class_exists('\App\Utils\UserContext')) {
+                    \App\Utils\UserContext::setUsuario([
+                        'id' => $usuario['id'],
+                        'nome' => $usuario['nome'],
+                        'email' => $usuario['email'],
+                        'nivel' => $usuario['papel_nivel'] ?? 'cliente', // Padrão é 'cliente'
+                        'status' => $usuario['perfil_status'],
+                        'creditos' => $usuario['creditos'],
+                        'hashConvite' => $usuario['hashConvite'],
+                        'hashAnfitriao' => $usuario['hashAnfitriao']
+                    ]);
+                }
             }
             
             return $usuario;
@@ -134,54 +136,54 @@ class Usuario
         }
     }
 
-public static function atualizar($id, $dados)
-{
-    $pdo = Database::getConnection();
-    
-    try {
-        // Primeiro verifica se o usuário existe
-        if (!self::buscarPorId($id)) {
-            throw new \Exception('Usuário não encontrado.');
-        }
+    public static function atualizar($id, $dados)
+    {
+        $pdo = Database::getConnection();
         
-        $sets = [];
-        $valores = [];
-        
-        foreach ($dados as $campo => $valor) {
-            // Permite atualizar apenas campos específicos
-            if (in_array($campo, ['nome', 'email', 'cpf', 'telefone'])) {
-                $sets[] = "$campo = ?";
-                $valores[] = $valor;
+        try {
+            // Primeiro verifica se o usuário existe
+            if (!self::buscarPorId($id)) {
+                throw new \Exception('Usuário não encontrado.');
             }
             
-            // Trata senha especialmente
-            if ($campo === 'senha' && !empty($valor)) {
-                $sets[] = "senha = ?";
-                // Faz hash da senha se não estiver criptografada
-                if (!password_get_info($valor)['algo']) {
-                    $valores[] = password_hash($valor, PASSWORD_DEFAULT);
-                } else {
+            $sets = [];
+            $valores = [];
+            
+            foreach ($dados as $campo => $valor) {
+                // Permite atualizar apenas campos específicos
+                if (in_array($campo, ['nome', 'email', 'cpf', 'telefone'])) {
+                    $sets[] = "$campo = ?";
                     $valores[] = $valor;
                 }
+                
+                // Trata senha especialmente
+                if ($campo === 'senha' && !empty($valor)) {
+                    $sets[] = "senha = ?";
+                    // Faz hash da senha se não estiver criptografada
+                    if (!password_get_info($valor)['algo']) {
+                        $valores[] = password_hash($valor, PASSWORD_DEFAULT);
+                    } else {
+                        $valores[] = $valor;
+                    }
+                }
             }
+            
+            if (empty($sets)) {
+                throw new \Exception('Nenhum dado válido para atualizar.');
+            }
+            
+            $valores[] = $id;
+            
+            $sql = "UPDATE integra_usuarios SET " . implode(', ', $sets) . " WHERE id = ?";
+            $stmt = $pdo->prepare($sql);
+            $result = $stmt->execute($valores);
+            
+            return true;
+        } catch (\Exception $e) {
+            error_log("Usuario::atualizar falhou: " . $e->getMessage());
+            throw $e;
         }
-        
-        if (empty($sets)) {
-            throw new \Exception('Nenhum dado válido para atualizar.');
-        }
-        
-        $valores[] = $id;
-        
-        $sql = "UPDATE integra_usuarios SET " . implode(', ', $sets) . " WHERE id = ?";
-        $stmt = $pdo->prepare($sql);
-        $result = $stmt->execute($valores);
-        
-        return true;
-    } catch (\Exception $e) {
-        error_log("Usuario::atualizar falhou: " . $e->getMessage());
-        throw $e;
     }
-}
 
     public static function deletar($id)
     {
@@ -354,7 +356,8 @@ public static function atualizar($id, $dados)
                         'nivel' => $usuario['papel_nivel'],
                         'status' => $usuario['perfil_status'] ?? 'Ativo',
                         'hashConvite' => $usuario['hashConvite'],
-                        'hashAnfitriao' => $usuario['hashAnfitriao']
+                        'hashAnfitriao' => $usuario['hashAnfitriao'],
+                        'creditos' => $usuario['creditos'] ?? 0.00
                     ]);
                 } else {
                     UserContext::setNivelAtivo('cliente');
@@ -483,7 +486,7 @@ public static function atualizar($id, $dados)
             
             // Verificar se o perfil pertence ao usuário
             $checkStmt = $pdo->prepare("
-                SELECT p.id, p.hashConvite, p.hashAnfitriao, pa.nivel as papel_nivel
+                SELECT p.id, p.hashConvite, p.hashAnfitriao, pa.nivel as papel_nivel, p.creditos
                 FROM integra_perfis p
                 JOIN integra_papeis pa ON p.id_papel = pa.id
                 WHERE p.id = ? AND p.id_usuario = ?
@@ -505,13 +508,14 @@ public static function atualizar($id, $dados)
             $updateStmt->execute([$perfilId, $usuarioId]);
             
             // Atualizar o contexto do usuário
-            \App\Utils\UserContext::setNivelAtivo($perfil['papel_nivel']);
-            \App\Utils\UserContext::setPerfilAtivo([
+            UserContext::setNivelAtivo($perfil['papel_nivel']);
+            UserContext::setPerfilAtivo([
                 'id' => $perfil['id'],
                 'nivel' => $perfil['papel_nivel'],
                 'status' => 'Ativo',
                 'hashConvite' => $perfil['hashConvite'],
-                'hashAnfitriao' => $perfil['hashAnfitriao']
+                'hashAnfitriao' => $perfil['hashAnfitriao'],
+                'creditos' => $perfil['creditos'] ?? 0.00
             ]);
             
             $pdo->commit();
@@ -558,6 +562,43 @@ public static function atualizar($id, $dados)
             return $stmt->fetch();
         } catch (\Exception $e) {
             error_log("Usuario::getPerfilAtivo falhou: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // Função auxiliar para criar um perfil padrão para um usuário
+    // Mantido como utilitário caso necessário
+    private static function criarPerfilPadrao($usuarioId)
+    {
+        $pdo = Database::getConnection();
+        try {
+            // Verificar se o papel 'cliente' existe
+            $stmt = $pdo->prepare("SELECT id FROM integra_papeis WHERE nivel = 'cliente'");
+            $stmt->execute();
+            $papel = $stmt->fetch();
+            
+            if (!$papel) {
+                // Se o papel 'cliente' não existir, criar
+                $stmt = $pdo->prepare("INSERT INTO integra_papeis (nivel, descricao) VALUES (?, ?)");
+                $stmt->execute(['cliente', 'Cliente do sistema']);
+                $papelId = $pdo->lastInsertId();
+            } else {
+                $papelId = $papel['id'];
+            }
+            
+            // Gerar hash de convite
+            $hashConvite = self::gerarHash();
+            
+            // Criar perfil para o usuário
+            $stmt = $pdo->prepare("
+                INSERT INTO integra_perfis (id_papel, id_usuario, creditos, hashConvite, hashAnfitriao, status)
+                VALUES (?, ?, 0.00, ?, NULL, 'Ativo')
+            ");
+            $stmt->execute([$papelId, $usuarioId, $hashConvite]);
+            
+            return $pdo->lastInsertId();
+        } catch (\Exception $e) {
+            error_log("Usuario::criarPerfilPadrao falhou: " . $e->getMessage());
             return false;
         }
     }

@@ -23,18 +23,36 @@ class Router
             if (is_array($action)) {
                 [$controller, $method] = $action;
                 $controllerInstance = new $controller();
-                // Opcional: verificar se o método existe
+                
+                // Verificar se o método existe
                 if (method_exists($controllerInstance, $method)) {
-                    $controllerInstance->$method();
+                    // Obter informações do método para determinar se ele aceita parâmetros
+                    $reflection = new \ReflectionMethod($controllerInstance, $method);
+                    $parameters = $reflection->getParameters();
+                    
+                    // Se o método não aceitar parâmetros ou todos forem opcionais, chamar sem parâmetros
+                    if (count($parameters) === 0 || $parameters[0]->isDefaultValueAvailable()) {
+                        $result = $controllerInstance->$method();
+                    } else {
+                        // Passar parâmetros mockados para os métodos que os esperam
+                        $result = $controllerInstance->$method(null, null, null);
+                    }
+                    
+                    // Se o método retornou um resultado (como um response), tentar enviar
+                    if ($result !== null && method_exists($result, 'send')) {
+                        $result->send();
+                    }
                 } else {
                     http_response_code(404);
                     echo "Método não encontrado.";
                 }
+            } elseif (is_callable($action)) {
+                // Se for uma função anônima
+                $action();
             }
         } else {
             http_response_code(404);
             echo "Página não encontrada.";
         }
     }
-    
 }

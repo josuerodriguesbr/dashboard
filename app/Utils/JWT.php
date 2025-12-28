@@ -8,12 +8,15 @@ class JWT
 {
     //private static $secretKey = 'sua_chave_secreta_aqui'; // Substitua por uma chave segura
     private static $secretKey = JWT_SECRET;
-    public static function encode($payload, $expiryHours = 24)
+    public static function encode($payload, $expiryHours = null)
     {
         $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
         
+        // Usa o valor padrão de JWT_EXPIRE ou converte horas para segundos
+        $expiry = $expiryHours ? $expiryHours * 3600 : (defined('JWT_EXPIRE') ? JWT_EXPIRE : 3600 * 24); // 24 horas por padrão
+        
         // Adiciona tempo de expiração
-        $payload['exp'] = time() + ($expiryHours * 3600);
+        $payload['exp'] = time() + $expiry;
         $payload['iat'] = time();
         
         $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
@@ -53,7 +56,7 @@ class JWT
     }
     
     // Método para criar uma sessão com JWT
-    public static function createSession($usuarioId, $userData = [], $expiryHours = 24)
+    public static function createSession($usuarioId, $userData = [], $expiryHours = null)
     {
         try {
             $payload = array_merge([
@@ -63,7 +66,7 @@ class JWT
             $token = self::encode($payload, $expiryHours);
             
             // Salvar a sessão no banco de dados
-            $sessaoId = Sessao::criar($usuarioId, $token, $expiryHours);
+            $sessaoId = Sessao::criar($usuarioId, $token, $expiryHours ? $expiryHours : 24); // Padrão para 24 horas
             
             if ($sessaoId) {
                 return [

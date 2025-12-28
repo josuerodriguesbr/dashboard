@@ -1,0 +1,334 @@
+<div class="gerenciar-creditos-container">
+    <div class="section-layout-coluna">
+        <!-- Seção de saldo -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Gerenciamento de Créditos</h2>
+            </div>
+            <div class="card-content">
+                <div class="saldo-info">
+                    <div class="saldo-destaque">
+                        <span>Saldo Atual:</span>
+                        <span id="saldo-atual">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de transferência -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Transferir Créditos</h3>
+            </div>
+            <div class="card-content">
+                <form id="form-transferencia" class="layout-coluna">
+                    <div class="campoDeOpcoes">
+                        <label for="destino-perfil">Perfil de Destino</label>
+                        <select id="destino-perfil" name="destino_perfil_id" class="campo-select" required>
+                            <option value="">Carregando perfis...</option>
+                        </select>
+                    </div>
+
+                    <div class="campoDeTexto">
+                        <label for="valor-transferencia">Valor</label>
+                        <input type="number" id="valor-transferencia" name="valor" step="0.01" min="0.01" placeholder="0.00" required>
+                    </div>
+
+                    <div class="campoDeTexto">
+                        <label for="descricao-transferencia">Descrição (Opcional)</label>
+                        <input type="text" id="descricao-transferencia" name="descricao" placeholder="Descrição da transferência">
+                    </div>
+
+                    <button type="submit" class="btn-primary">Transferir Créditos</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Seção de histórico -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Histórico de Transações</h3>
+            </div>
+            <div class="card-content">
+                <div id="historico-transacoes">
+                    <p>Carregando histórico...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Função para carregar o saldo
+    async function carregarSaldo() {
+        try {
+            const response = await fetch('/projetos/dashboard/creditos/saldo', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('saldo-atual').textContent = 'R$ ' + parseFloat(data.saldo).toFixed(2);
+                } else {
+                    console.error('Erro ao carregar saldo:', data.message);
+                    mostrarNotificacao('Erro ao carregar saldo: ' + data.message, 'erro');
+                }
+            } else {
+                console.error('Erro na requisição do saldo');
+                mostrarNotificacao('Erro ao carregar saldo', 'erro');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar saldo:', error);
+            mostrarNotificacao('Erro ao carregar saldo', 'erro');
+        }
+    }
+
+    // Função para carregar perfis para transferência
+    async function carregarPerfisParaTransferencia() {
+        try {
+            const response = await fetch('/projetos/dashboard/creditos/perfis-transferencia', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const select = document.getElementById('destino-perfil');
+                    select.innerHTML = '<option value="">Selecione um perfil</option>';
+                    
+                    data.perfis.forEach(perfil => {
+                        const option = document.createElement('option');
+                        option.value = perfil.id;
+                        option.textContent = `${perfil.nome} (${perfil.papel_nivel}) - R$ ${parseFloat(perfil.creditos).toFixed(2)}`;
+                        select.appendChild(option);
+                    });
+                } else {
+                    console.error('Erro ao carregar perfis:', data.message);
+                    mostrarNotificacao('Erro ao carregar perfis: ' + data.message, 'erro');
+                }
+            } else {
+                console.error('Erro na requisição dos perfis');
+                mostrarNotificacao('Erro ao carregar perfis', 'erro');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar perfis:', error);
+            mostrarNotificacao('Erro ao carregar perfis', 'erro');
+        }
+    }
+
+    // Função para carregar histórico de transações
+    async function carregarHistoricoTransacoes() {
+        try {
+            const response = await fetch('/projetos/dashboard/creditos/historico', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    exibirHistoricoTransacoes(data.transacoes);
+                } else {
+                    console.error('Erro ao carregar histórico:', data.message);
+                    mostrarNotificacao('Erro ao carregar histórico: ' + data.message, 'erro');
+                }
+            } else {
+                console.error('Erro na requisição do histórico');
+                mostrarNotificacao('Erro ao carregar histórico', 'erro');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar histórico:', error);
+            mostrarNotificacao('Erro ao carregar histórico', 'erro');
+        }
+    }
+
+    // Função para exibir o histórico de transações
+    function exibirHistoricoTransacoes(transacoes) {
+        const container = document.getElementById('historico-transacoes');
+        
+        if (transacoes.length === 0) {
+            container.innerHTML = '<p>Nenhuma transação encontrada.</p>';
+            return;
+        }
+
+        let html = '<div class="historico-grid">';
+        
+        transacoes.forEach(transacao => {
+            const tipoClasse = transacao.tipo === 'entrada' ? 'historico-entrada' : 
+                              transacao.tipo === 'saida' ? 'historico-saida' : 'historico-transferencia';
+            
+            const tipoTexto = transacao.tipo === 'entrada' ? 'Entrada' : 
+                             transacao.tipo === 'saida' ? 'Saída' : 'Transferência';
+            
+            let descricao = `R$ ${parseFloat(transacao.valor).toFixed(2)}`;
+            
+            if (transacao.descricao) {
+                descricao += ` - ${transacao.descricao}`;
+            }
+            
+            if (transacao.tipo === 'transferencia') {
+                if (transacao.origem_perfil_id === window.usuario.id) {
+                    descricao += ` para ${transacao.nome_destino || 'Destinatário'}`;
+                } else {
+                    descricao += ` de ${transacao.nome_origem || 'Remetente'}`;
+                }
+            }
+            
+            html += `
+                <div class="historico-item ${tipoClasse}">
+                    <div class="historico-tipo">${tipoTexto}</div>
+                    <div class="historico-descricao">${descricao}</div>
+                    <div class="historico-data">${new Date(transacao.createdAt).toLocaleString('pt-BR')}</div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    // Função para lidar com a transferência de créditos
+    async function handleSubmitTransferencia(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(event.target);
+        const dados = Object.fromEntries(formData);
+        dados.valor = parseFloat(dados.valor);
+        
+        try {
+            const response = await fetch('/projetos/dashboard/creditos/transferir', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify(dados)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                mostrarNotificacao('Transferência realizada com sucesso!', 'sucesso');
+                
+                // Limpar o formulário
+                event.target.reset();
+                
+                // Atualizar saldo e histórico
+                setTimeout(() => {
+                    carregarSaldo();
+                    carregarHistoricoTransacoes();
+                }, 1000);
+            } else {
+                mostrarNotificacao('Erro na transferência: ' + result.message, 'erro');
+            }
+        } catch (error) {
+            console.error('Erro na transferência:', error);
+            mostrarNotificacao('Erro na transferência', 'erro');
+        }
+    }
+
+    // Função para obter o token de autenticação
+
+    // Inicializar a página
+    document.addEventListener('DOMContentLoaded', function() {
+        carregarSaldo();
+        carregarPerfisParaTransferencia();
+        carregarHistoricoTransacoes();
+        
+        const form = document.getElementById('form-transferencia');
+        if (form) {
+            form.addEventListener('submit', handleSubmitTransferencia);
+        }
+    });
+</script>
+
+<style>
+    .gerenciar-creditos-container {
+        padding: 1rem;
+    }
+
+    .saldo-info {
+        text-align: center;
+        padding: 1rem 0;
+    }
+
+    .saldo-destaque {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--cor-texto);
+    }
+
+    .saldo-destaque span:first-child {
+        display: block;
+        font-size: 1rem;
+        color: var(--cor-texto-secundario);
+        margin-bottom: 0.5rem;
+    }
+
+    .saldo-destaque span:last-child {
+        color: var(--cor-botao);
+    }
+
+    .campo-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--cor-borda);
+        border-radius: 0.375rem;
+        background-color: var(--cor-fundo-input);
+        color: var(--cor-texto);
+        font-size: 1rem;
+    }
+
+    .historico-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .historico-item {
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        border: 1px solid var(--cor-borda);
+    }
+
+    .historico-entrada {
+        background-color: rgba(52, 211, 153, 0.1);
+        border-left: 4px solid var(--cor-sucesso);
+    }
+
+    .historico-saida {
+        background-color: rgba(248, 113, 113, 0.1);
+        border-left: 4px solid var(--cor-erro);
+    }
+
+    .historico-transferencia {
+        background-color: rgba(96, 165, 250, 0.1);
+        border-left: 4px solid var(--cor-botao);
+    }
+
+    .historico-tipo {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .historico-descricao {
+        margin-bottom: 0.25rem;
+    }
+
+    .historico-data {
+        font-size: 0.8rem;
+        color: var(--cor-texto-secundario);
+    }
+</style>

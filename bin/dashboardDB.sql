@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 23-Dez-2025 às 12:45
+-- Tempo de geração: 26-Dez-2025 às 20:03
 -- Versão do servidor: 10.4.25-MariaDB
 -- versão do PHP: 7.4.30
 
@@ -20,36 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Banco de dados: `dashboard`
 --
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela `creditos_saldo`
---
-
-CREATE TABLE `creditos_saldo` (
-  `usuario_id` int(11) NOT NULL,
-  `saldo` decimal(15,2) NOT NULL DEFAULT 0.00,
-  `updatedAt` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela `creditos_transacoes`
---
-
-CREATE TABLE `creditos_transacoes` (
-  `id` int(11) NOT NULL,
-  `tipo` enum('entrada','saida','transferencia','expiracao','reembolso','ajuste') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `origem_id` int(11) DEFAULT NULL,
-  `destino_id` int(11) DEFAULT NULL,
-  `valor` decimal(15,2) NOT NULL,
-  `descricao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `referencia_externa` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `status` enum('pendente','confirmado','cancelado','expirado') COLLATE utf8mb4_unicode_ci DEFAULT 'confirmado',
-  `createdAt` datetime DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -163,6 +133,18 @@ CREATE TABLE `integra_produtos_servicos` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura da tabela `integra_saldo`
+--
+
+CREATE TABLE `integra_saldo` (
+  `perfil_id` int(11) NOT NULL,
+  `saldo` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `updatedAt` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura da tabela `integra_sessoes`
 --
 
@@ -172,6 +154,24 @@ CREATE TABLE `integra_sessoes` (
   `token` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
   `expiresAt` datetime NOT NULL,
   `isActive` tinyint(1) DEFAULT 1,
+  `createdAt` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura da tabela `integra_transacoes`
+--
+
+CREATE TABLE `integra_transacoes` (
+  `id` int(11) NOT NULL,
+  `tipo` enum('entrada','saida','transferencia','expiracao','reembolso','ajuste') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `origem_perfil_id` int(11) DEFAULT NULL,
+  `destino_perfil_id` int(11) DEFAULT NULL,
+  `valor` decimal(15,2) NOT NULL,
+  `descricao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `referencia_externa` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` enum('pendente','confirmado','cancelado','expirado') COLLATE utf8mb4_unicode_ci DEFAULT 'confirmado',
   `createdAt` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -230,20 +230,6 @@ CREATE TABLE `integra_vendas_itens` (
 --
 
 --
--- Índices para tabela `creditos_saldo`
---
-ALTER TABLE `creditos_saldo`
-  ADD PRIMARY KEY (`usuario_id`);
-
---
--- Índices para tabela `creditos_transacoes`
---
-ALTER TABLE `creditos_transacoes`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `origem_id` (`origem_id`),
-  ADD KEY `destino_id` (`destino_id`);
-
---
 -- Índices para tabela `integra_logs`
 --
 ALTER TABLE `integra_logs`
@@ -285,6 +271,12 @@ ALTER TABLE `integra_produtos_servicos`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices para tabela `integra_saldo`
+--
+ALTER TABLE `integra_saldo`
+  ADD PRIMARY KEY (`perfil_id`);
+
+--
 -- Índices para tabela `integra_sessoes`
 --
 ALTER TABLE `integra_sessoes`
@@ -292,6 +284,16 @@ ALTER TABLE `integra_sessoes`
   ADD KEY `idx_token` (`token`(100)),
   ADD KEY `idx_expiresAt` (`expiresAt`),
   ADD KEY `idx_usuarioId` (`usuarioId`);
+
+--
+-- Índices para tabela `integra_transacoes`
+--
+ALTER TABLE `integra_transacoes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `origem_id` (`origem_perfil_id`),
+  ADD KEY `destino_id` (`destino_perfil_id`),
+  ADD KEY `origem_perfil_id` (`origem_perfil_id`),
+  ADD KEY `destino_perfil_id` (`destino_perfil_id`);
 
 --
 -- Índices para tabela `integra_usuarios`
@@ -323,12 +325,6 @@ ALTER TABLE `integra_vendas_itens`
 --
 -- AUTO_INCREMENT de tabelas despejadas
 --
-
---
--- AUTO_INCREMENT de tabela `creditos_transacoes`
---
-ALTER TABLE `creditos_transacoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `integra_logs`
@@ -367,6 +363,12 @@ ALTER TABLE `integra_sessoes`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `integra_transacoes`
+--
+ALTER TABLE `integra_transacoes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `integra_usuarios`
 --
 ALTER TABLE `integra_usuarios`
@@ -389,19 +391,6 @@ ALTER TABLE `integra_vendas_itens`
 --
 
 --
--- Limitadores para a tabela `creditos_saldo`
---
-ALTER TABLE `creditos_saldo`
-  ADD CONSTRAINT `creditos_saldo_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `integra_usuarios` (`id`) ON DELETE CASCADE;
-
---
--- Limitadores para a tabela `creditos_transacoes`
---
-ALTER TABLE `creditos_transacoes`
-  ADD CONSTRAINT `creditos_transacoes_ibfk_1` FOREIGN KEY (`origem_id`) REFERENCES `integra_usuarios` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `creditos_transacoes_ibfk_2` FOREIGN KEY (`destino_id`) REFERENCES `integra_usuarios` (`id`) ON DELETE SET NULL;
-
---
 -- Limitadores para a tabela `integra_logs`
 --
 ALTER TABLE `integra_logs`
@@ -421,10 +410,23 @@ ALTER TABLE `integra_perfis`
   ADD CONSTRAINT `fk_perfis_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `integra_usuarios` (`id`) ON DELETE CASCADE;
 
 --
+-- Limitadores para a tabela `integra_saldo`
+--
+ALTER TABLE `integra_saldo`
+  ADD CONSTRAINT `integra_saldo_ibfk_1` FOREIGN KEY (`perfil_id`) REFERENCES `integra_perfis` (`id`) ON DELETE CASCADE;
+
+--
 -- Limitadores para a tabela `integra_sessoes`
 --
 ALTER TABLE `integra_sessoes`
   ADD CONSTRAINT `integra_sessoes_ibfk_1` FOREIGN KEY (`usuarioId`) REFERENCES `integra_usuarios` (`id`) ON DELETE CASCADE;
+
+--
+-- Limitadores para a tabela `integra_transacoes`
+--
+ALTER TABLE `integra_transacoes`
+  ADD CONSTRAINT `integra_transacoes_ibfk_1` FOREIGN KEY (`origem_perfil_id`) REFERENCES `integra_perfis` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `integra_transacoes_ibfk_2` FOREIGN KEY (`destino_perfil_id`) REFERENCES `integra_perfis` (`id`) ON DELETE SET NULL;
 
 --
 -- Limitadores para a tabela `integra_usuarios`

@@ -53,7 +53,7 @@ try {
             
             // Criar perfil admin
             $stmt = $pdo->prepare("INSERT INTO integra_perfis (id_papel, id_usuario, creditos, hashConvite, hashAnfitriao, status) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$papel['id'], $usuarioId, 0.00, $hashConvite, $hashConvite /* Primeiro usuário tem hashAnfitriao igual ao hashConvite */, 'Ativo']);
+            $stmt->execute([$papel['id'], $usuarioId, 0.00, $hashConvite, NULL, 'Ativo']);
             $perfilId = $pdo->lastInsertId();
             echo "Perfil administrador criado com ID: $perfilId e hashConvite: $hashConvite\n";
             
@@ -83,7 +83,7 @@ try {
             if (!$perfilExistente) {
                 $hashConvite = gerarHash();
                 $insertStmt = $pdo->prepare("INSERT INTO integra_perfis (id_papel, id_usuario, creditos, hashConvite, hashAnfitriao, status) VALUES (?, ?, ?, ?, ?, ?)");
-                $insertStmt->execute([$papel['id'], $adminId, $creditosIniciais, $hashConvite, $hashConvite, 'Ativo']);
+                $insertStmt->execute([$papel['id'], $adminId, $creditosIniciais, $hashConvite, NULL, 'Ativo']);
                 echo "Perfil de $nivelPapel criado para o administrador\n";
                 return true;
             } else {

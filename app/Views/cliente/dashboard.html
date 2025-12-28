@@ -1,4 +1,49 @@
 <div class="container">
     <h1>Dashboard do Cliente</h1>
     <p>Você está no dashboard de Cliente</p>
+    
+    <div class="layout-grade">
+        <!-- Cartão de Créditos -->
+        <?php include ROOT . 'app/Views/recursos/cartoes/cartao-creditos.html'; ?>
+        
+        <!-- Cartão de Convites -->
+        <?php include ROOT . 'app/Views/recursos/cartoes/cartao-convidar.html'; ?>
+        
+        <!-- Outros cartões podem ser adicionados aqui -->
+        <div class="card">
+            <div class="card-header">
+                <h3>
+                    <span class="card-icon">🛒</span>
+                    Minhas Compras
+                </h3>
+            </div>
+            <div class="card-content">
+                <div class="saldo-destaque">
+                    <span>Em breve</span>
+                </div>
+                <p class="card-description">Histórico de compras e serviços</p>
+            </div>
+            <div class="card-footer">
+                <span class="card-action">Em desenvolvimento</span>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3>
+                    <span class="card-icon">⭐</span>
+                    Avaliações
+                </h3>
+            </div>
+            <div class="card-content">
+                <div class="saldo-destaque">
+                    <span>Em breve</span>
+                </div>
+                <p class="card-description">Avaliações e feedbacks</p>
+            </div>
+            <div class="card-footer">
+                <span class="card-action">Em desenvolvimento</span>
+            </div>
+        </div>
+    </div>
 </div>

@@ -1,0 +1,388 @@
+<div class="card-convidar card">
+    <div class="card-header">
+        <h3>
+            <span class="card-icon">📧</span>
+            Convidar Usuários
+        </h3>
+    </div>
+    <div class="card-content">
+        <p class="card-description">Convide novos usuários para a plataforma</p>
+        
+        <div class="convite-opcoes">
+            <div class="campoDeOpcoes">
+                <label for="tipo-convite">Tipo de Usuário:</label>
+                <select id="tipo-convite" class="campoDeOpcoes-select">
+                    <option value="cliente">Cliente</option>
+                </select>
+            </div>
+            
+            <div id="vendedor-selecao" class="campoDeOpcoes oculta">
+                <label for="vendedor-anfitriao">Vendedor Anfitrião:</label>
+                <select id="vendedor-anfitriao" class="campoDeOpcoes-select">
+                    <option value="">Carregando vendedores...</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="convite-actions">
+            <button id="gerar-convite-btn" class="btn-primary">Gerar Link de Convite</button>
+        </div>
+        
+        <div id="link-convite-container" class="oculta">
+            <label for="link-convite">Link de Convite:</label>
+            <div class="input-group">
+                <input type="text" id="link-convite" readonly class="campoDeTexto-input">
+                <button id="copiar-link-btn" class="btn-secondary">Copiar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    console.log('Carregando cartão de convites...');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM carregado para cartão de convites');
+        // Carregar o tipo de usuário do contexto
+        const nivelUsuario = window.usuario ? window.usuario.nivel : 'cliente';
+        console.log('Nível do usuário:', nivelUsuario);
+        
+        // Configurar as opções de convite com base no nível do usuário
+        configurarOpcoesConvite(nivelUsuario);
+        
+        // Adicionar evento para o botão de gerar convite
+        document.getElementById('gerar-convite-btn').addEventListener('click', gerarLinkConvite);
+        
+        // Adicionar evento para o botão de copiar
+        document.getElementById('copiar-link-btn').addEventListener('click', copiarLink);
+        
+        // Carregar vendedores quando necessário
+        document.getElementById('tipo-convite').addEventListener('change', function() {
+            if (this.value === 'cliente') {
+                const nivelUsuario = window.usuario ? window.usuario.nivel : 'cliente';
+                if (nivelUsuario !== 'vendedor') {
+                    carregarVendedoresDisponiveis();
+                }
+            }
+        });
+        
+        // Carregar vendedores se o usuário não for vendedor e o tipo inicial for cliente
+        if (nivelUsuario !== 'vendedor') {
+            setTimeout(() => {
+                if (document.getElementById('tipo-convite').value === 'cliente') {
+                    carregarVendedoresDisponiveis();
+                }
+            }, 100);
+        }
+    });
+    
+    function configurarOpcoesConvite(nivel) {
+        console.log('Configurando opções de convite para nível:', nivel);
+        const selectTipo = document.getElementById('tipo-convite');
+        selectTipo.innerHTML = ''; // Limpar opções existentes
+        
+        // Definir opções com base no nível do usuário
+        let opcoes = [];
+        
+        switch(nivel) {
+            case 'admin':
+                opcoes = [
+                    { value: 'assinante', text: 'Assinante' },
+                    { value: 'vendedor', text: 'Vendedor' },
+                    { value: 'operador', text: 'Operador' },
+                    { value: 'cliente', text: 'Cliente' }
+                ];
+                break;
+            case 'assinante':
+                opcoes = [
+                    { value: 'vendedor', text: 'Vendedor' },
+                    { value: 'operador', text: 'Operador' },
+                    { value: 'cliente', text: 'Cliente' }
+                ];
+                break;
+            case 'operador':
+                opcoes = [
+                    { value: 'vendedor', text: 'Vendedor' },
+                    { value: 'cliente', text: 'Cliente' }
+                ];
+                break;
+            case 'vendedor':
+                opcoes = [
+                    { value: 'cliente', text: 'Cliente' }
+                ];
+                break;
+            case 'cliente':
+                opcoes = [
+                    { value: 'cliente', text: 'Cliente' }
+                ];
+                break;
+            default:
+                opcoes = [
+                    { value: 'cliente', text: 'Cliente' }
+                ];
+        }
+        
+        // Adicionar opções ao select
+        opcoes.forEach(opcao => {
+            const option = document.createElement('option');
+            option.value = opcao.value;
+            option.textContent = opcao.text;
+            selectTipo.appendChild(option);
+        });
+        
+        // Mostrar/ocultar a seleção de vendedor se necessário
+        atualizarVisibilidadeVendedorSelecao();
+    }
+    
+    function atualizarVisibilidadeVendedorSelecao() {
+        const nivelUsuario = window.usuario ? window.usuario.nivel : 'cliente';
+        const tipoConvite = document.getElementById('tipo-convite').value;
+        const vendedorSelecao = document.getElementById('vendedor-selecao');
+        
+        // Mostrar a seleção de vendedor se for cliente e o usuário não for vendedor
+        if (tipoConvite === 'cliente' && nivelUsuario !== 'vendedor') {
+            vendedorSelecao.classList.remove('oculta');
+        } else {
+            vendedorSelecao.classList.add('oculta');
+        }
+    }
+    
+    async function carregarVendedoresDisponiveis() {
+        console.log('Carregando vendedores disponíveis...');
+        try {
+            const nivelUsuario = window.usuario ? window.usuario.nivel : 'cliente';
+            
+            // Apenas mostrar a seleção de vendedor se o usuário não for vendedor
+            const vendedorSelecao = document.getElementById('vendedor-selecao');
+            if (nivelUsuario === 'vendedor') {
+                vendedorSelecao.classList.add('oculta');
+                return;
+            } else {
+                vendedorSelecao.classList.remove('oculta');
+            }
+            
+            // Fazer a requisição para obter vendedores
+            const response = await fetch('/projetos/dashboard/usuarios/vendedores', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getAuthToken()
+                },
+                credentials: 'same-origin'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Resposta de vendedores:', data);
+                if (data.success) {
+                    const selectVendedor = document.getElementById('vendedor-anfitriao');
+                    selectVendedor.innerHTML = '<option value="">Selecione um vendedor</option>';
+                    
+                    data.vendedores.forEach(vendedor => {
+                        const option = document.createElement('option');
+                        option.value = vendedor.id;
+                        option.textContent = vendedor.nome;
+                        selectVendedor.appendChild(option);
+                    });
+                } else {
+                    console.error('Erro ao carregar vendedores:', data.message);
+                    window.mostrarNotificacao && window.mostrarNotificacao('Erro ao carregar vendedores: ' + data.message, 'erro');
+                }
+            } else {
+                console.error('Erro na requisição dos vendedores');
+                window.mostrarNotificacao && window.mostrarNotificacao('Erro ao carregar vendedores', 'erro');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar vendedores:', error);
+            window.mostrarNotificacao && window.mostrarNotificacao('Erro ao carregar vendedores', 'erro');
+        }
+    }
+    
+    async function gerarLinkConvite() {
+        const tipoConvite = document.getElementById('tipo-convite').value;
+        const nivelUsuario = window.usuario ? window.usuario.nivel : 'cliente';
+        
+        // Regras de convite:
+        // - Apenas admin pode convidar assinantes
+        // - Cliente só pode convidar cliente se for para o mesmo vendedor
+        if (nivelUsuario === 'cliente' && tipoConvite === 'cliente') {
+            window.mostrarNotificacao && window.mostrarNotificacao('Você não pode convidar outros clientes diretamente', 'erro');
+            return;
+        }
+        
+        if (nivelUsuario !== 'admin' && tipoConvite === 'assinante') {
+            window.mostrarNotificacao && window.mostrarNotificacao('Apenas administradores podem convidar assinantes', 'erro');
+            return;
+        }
+        
+        // Para clientes, verificar se um vendedor foi selecionado
+        if (tipoConvite === 'cliente' && nivelUsuario !== 'vendedor') {
+            const vendedorId = document.getElementById('vendedor-anfitriao').value;
+            if (!vendedorId) {
+                window.mostrarNotificacao && window.mostrarNotificacao('Selecione um vendedor para o novo cliente', 'erro');
+                return;
+            }
+        }
+        
+        try {
+            // Obter o hash do usuário atual
+            const response = await fetch('/projetos/dashboard/gerar-link-convite', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getAuthToken()
+                },
+                credentials: 'same-origin'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Resposta do link de convite:', data);
+                if (data.success) {
+                    let link = window.location.origin + '/projetos/dashboard/cadastro-via-convite?hash=' + data.hash;
+                    
+                    // Adicionar o tipo de perfil ao link
+                    link += '&tipo=' + tipoConvite;
+                    
+                    // Se for cliente e foi selecionado um vendedor, usar o hash do vendedor
+                    if (tipoConvite === 'cliente' && nivelUsuario !== 'vendedor') {
+                        const vendedorId = document.getElementById('vendedor-anfitriao').value;
+                        if (vendedorId) {
+                            // Obter o hash do vendedor selecionado
+                            const vendedorHash = await getHashVendedor(vendedorId);
+                            if (vendedorHash) {
+                                // Substituir o hash do convite atual pelo do vendedor
+                                link = link.replace(data.hash, vendedorHash);
+                            }
+                        }
+                    }
+                    
+                    document.getElementById('link-convite').value = link;
+                    document.getElementById('link-convite-container').classList.remove('oculta');
+                    
+                    window.mostrarNotificacao && window.mostrarNotificacao('Link de convite gerado com sucesso!', 'sucesso');
+                } else {
+                    console.error('Erro ao gerar link:', data.message);
+                    window.mostrarNotificacao && window.mostrarNotificacao('Erro ao gerar link: ' + data.message, 'erro');
+                }
+            } else {
+                console.error('Erro na requisição do link');
+                window.mostrarNotificacao && window.mostrarNotificacao('Erro ao gerar link de convite', 'erro');
+            }
+        } catch (error) {
+            console.error('Erro ao gerar link:', error);
+            window.mostrarNotificacao && window.mostrarNotificacao('Erro ao gerar link de convite', 'erro');
+        }
+    }
+    
+    async function getHashVendedor(vendedorId) {
+        try {
+            const response = await fetch('/projetos/dashboard/usuarios/vendedor-hash/' + vendedorId, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getAuthToken()
+                },
+                credentials: 'same-origin'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Resposta do hash do vendedor:', data);
+                if (data.success) {
+                    return data.hash;
+                } else {
+                    console.error('Erro ao obter hash do vendedor:', data.message);
+                    window.mostrarNotificacao && window.mostrarNotificacao('Erro ao obter hash do vendedor: ' + data.message, 'erro');
+                    return null;
+                }
+            } else {
+                console.error('Erro na requisição do hash do vendedor');
+                window.mostrarNotificacao && window.mostrarNotificacao('Erro ao obter hash do vendedor', 'erro');
+                return null;
+            }
+        } catch (error) {
+            console.error('Erro ao obter hash do vendedor:', error);
+            window.mostrarNotificacao && window.mostrarNotificacao('Erro ao obter hash do vendedor', 'erro');
+            return null;
+        }
+    }
+    
+    function copiarLink() {
+        const linkInput = document.getElementById('link-convite');
+        linkInput.select();
+        linkInput.setSelectionRange(0, 99999); // Para dispositivos móveis
+        
+        document.execCommand('copy');
+        
+        window.mostrarNotificacao && window.mostrarNotificacao('Link copiado para a área de transferência!', 'sucesso');
+    }
+    
+    // Função para obter o token de autenticação
+    function getAuthToken() {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'authToken') {
+                return value;
+            }
+        }
+        return null;
+    }
+    
+    // Atualizar visibilidade quando o tipo de convite mudar
+    document.getElementById('tipo-convite').addEventListener('change', atualizarVisibilidadeVendedorSelecao);
+</script>
+
+<style>
+    .card-convidar {
+        background-color: var(--cor-fundo-card);
+        border: 1px solid var(--cor-borda);
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+
+    .convite-opcoes {
+        margin: 1rem 0;
+    }
+
+    .campoDeOpcoes {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .campoDeOpcoes label {
+        font-weight: 500;
+        color: var(--cor-texto);
+    }
+
+    .campoDeOpcoes-select {
+        padding: 0.75rem;
+        border: 1px solid var(--cor-borda);
+        border-radius: 0.375rem;
+        background-color: var(--cor-fundo-input);
+        color: var(--cor-texto);
+        font-size: 1rem;
+    }
+
+    .convite-actions {
+        margin: 1rem 0;
+    }
+
+    .input-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .campoDeTexto-input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid var(--cor-borda);
+        border-radius: 0.375rem;
+        background-color: var(--cor-fundo-input);
+        color: var(--cor-texto);
+        font-size: 1rem;
+    }
+</style>

@@ -1,4 +1,49 @@
 <div class="container">
     <h1>Dashboard do Assinante</h1>
     <p>Você está no dashboard de Assinante</p>
+    
+    <div class="layout-grade">
+        <!-- Cartão de Créditos -->
+        <?php include ROOT . 'app/Views/recursos/cartoes/cartao-creditos.html'; ?>
+        
+        <!-- Cartão de Convites -->
+        <?php include ROOT . 'app/Views/recursos/cartoes/cartao-convidar.html'; ?>
+        
+        <!-- Outros cartões podem ser adicionados aqui -->
+        <div class="card">
+            <div class="card-header">
+                <h3>
+                    <span class="card-icon">📊</span>
+                    Relatórios
+                </h3>
+            </div>
+            <div class="card-content">
+                <div class="saldo-destaque">
+                    <span>Em breve</span>
+                </div>
+                <p class="card-description">Acesso a relatórios e estatísticas</p>
+            </div>
+            <div class="card-footer">
+                <span class="card-action">Em desenvolvimento</span>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3>
+                    <span class="card-icon">👥</span>
+                    Meus Usuários
+                </h3>
+            </div>
+            <div class="card-content">
+                <div class="saldo-destaque">
+                    <span>Em breve</span>
+                </div>
+                <p class="card-description">Gerenciamento de usuários vinculados</p>
+            </div>
+            <div class="card-footer">
+                <span class="card-action">Em desenvolvimento</span>
+            </div>
+        </div>
+    </div>
 </div>

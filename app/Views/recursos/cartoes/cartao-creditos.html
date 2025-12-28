@@ -1,0 +1,130 @@
+<div class="cartao-credito card" style="cursor: pointer;" onclick="abrirTelaCreditos()">
+    <div class="card-header">
+        <h3>
+            <span class="card-icon">💰</span>
+            Meus Créditos
+        </h3>
+    </div>
+    <div class="card-content">
+        <div class="saldo-destaque">
+            <span id="saldo-credito">Carregando...</span>
+        </div>
+        <p class="card-description">Saldo atual de créditos</p>
+    </div>
+    <div class="card-footer">
+        <span class="card-action">Clique para gerenciar</span>
+    </div>
+</div>
+
+<script>
+    console.log('Carregando cartão de créditos...');
+    
+    // Função para carregar o saldo de créditos
+    async function carregarSaldoCreditos() {
+        console.log('Tentando carregar saldo de créditos...');
+        try {
+            const response = await fetch('/projetos/dashboard/creditos/saldo', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'  // Importante: incluir credenciais (cookies) na requisição
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Resposta do saldo:', data);
+                if (data.success) {
+                    document.getElementById('saldo-credito').textContent = 'R$ ' + parseFloat(data.saldo).toFixed(2);
+                } else {
+                    console.error('Erro ao carregar saldo:', data.message);
+                    document.getElementById('saldo-credito').textContent = 'Erro ao carregar';
+                    window.mostrarNotificacao && window.mostrarNotificacao('Erro ao carregar saldo: ' + data.message, 'erro');
+                }
+            } else {
+                console.error('Erro na requisição do saldo');
+                document.getElementById('saldo-credito').textContent = 'Erro de conexão';
+                window.mostrarNotificacao && window.mostrarNotificacao('Erro na requisição do saldo', 'erro');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar saldo:', error);
+            document.getElementById('saldo-credito').textContent = 'Erro de conexão';
+            window.mostrarNotificacao && window.mostrarNotificacao('Erro ao carregar saldo: ' + error.message, 'erro');
+        }
+    }
+
+    // Função para abrir a tela de créditos
+    function abrirTelaCreditos() {
+        window.location.href = '/projetos/dashboard/creditos';
+    }
+
+
+    // Carregar o saldo quando a página for carregada
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM carregado, tentando carregar saldo...');
+        carregarSaldoCreditos();
+    });
+</script>
+
+<style>
+    .cartao-credito {
+        background-color: var(--cor-fundo-card);
+        border: 1px solid var(--cor-borda);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .cartao-credito:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .card-header h3 {
+        display: flex;
+        align-items: center;
+        font-size: 1.1rem;
+        margin: 0;
+        color: var(--cor-texto);
+    }
+
+    .card-icon {
+        margin-right: 0.5rem;
+        font-size: 1.3rem;
+    }
+
+    .card-content {
+        margin-bottom: 0.75rem;
+    }
+
+    .saldo-destaque {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--cor-botao);
+        margin-bottom: 0.25rem;
+    }
+
+    .card-description {
+        color: var(--cor-texto-secundario);
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .card-footer {
+        border-top: 1px solid var(--cor-borda);
+        padding-top: 0.75rem;
+        text-align: right;
+    }
+
+    .card-action {
+        color: var(--cor-botao);
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+</style>

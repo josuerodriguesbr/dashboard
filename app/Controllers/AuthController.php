@@ -9,6 +9,11 @@ class AuthController
 {
     public function login()
     {
+        // Limpar qualquer conteúdo que possa ter sido enviado anteriormente
+        if (ob_get_level()) {
+            ob_clean();
+        }
+        
         // Garantir que a resposta seja JSON
         header('Content-Type: application/json; charset=utf-8');
         
@@ -51,7 +56,7 @@ class AuthController
             $sessionData = \App\Utils\JWT::createSession(
                 $resultado['usuario']['id'],
                 $resultado['usuario'],
-                2 // 2 minutos
+                24 // 24 horas
             );
             
             error_log("Dados da sessão: " . print_r($sessionData, true));
@@ -59,7 +64,7 @@ class AuthController
             if ($sessionData) {
                 // Definir o cookie com a nova sessão
                 setcookie('authToken', $sessionData['token'], [
-                    'expires' => time() + JWT_EXPIRE, // 2 minutos 
+                    'expires' => time() + JWT_EXPIRE, // 24 horas 
                     'path' => '/projetos/dashboard/',
                     'secure' => false,
                     // 'httponly' => true, // Removido para permitir leitura via JS
@@ -85,6 +90,11 @@ class AuthController
 
     public function logout()
     {
+        // Limpar qualquer conteúdo que possa ter sido enviado anteriormente
+        if (ob_get_level()) {
+            ob_clean();
+        }
+        
         // Remover o cookie de autenticação
         setcookie('authToken', '', [
             'expires' => time() - 3600,
@@ -93,6 +103,7 @@ class AuthController
             'samesite' => 'Lax'
         ]);
 
+        header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['success' => true, 'message' => 'Logout realizado com sucesso']);
         exit;
     }
@@ -147,7 +158,7 @@ class AuthController
                 if (isset($resultado['success']) && $resultado['success'] && isset($resultado['token'])) {
                     // Definir o cookie com a nova sessão
                     setcookie('authToken', $resultado['token'], [
-                        'expires' => time() + (defined('JWT_EXPIRE') ? JWT_EXPIRE : 120), // 2 minutos por padrão
+                        'expires' => time() + (defined('JWT_EXPIRE') ? JWT_EXPIRE : 120), // 24 horas por padrão
                         'path' => '/projetos/dashboard/',
                         'secure' => false,
                         'samesite' => 'Lax'
