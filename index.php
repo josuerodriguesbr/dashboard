@@ -12,7 +12,7 @@ use App\Controllers\AssinanteController;
 use App\Controllers\OperadorController;
 use App\Controllers\VendedorController;
 use App\Controllers\ClienteController;
-use App\Controllers\CreditoController; // Adicionando o novo controller
+use App\Controllers\CreditosController; // Controller de Créditos (Novo)
 use App\Controllers\UsuarioController; // Adicionando o controller de usuários
 
 $router = new Router();
@@ -22,6 +22,7 @@ $router->get('/', [DashboardController::class, 'paginaInicial']);
 // Removido: $router->get('/mostra-cadastro-usuario', [DashboardController::class, 'mostraCadastroUsuario']);
 $router->get('/perfil', [DashboardController::class, 'mostraPerfilUsuario']); // Nova rota
 $router->get('/logs', [DashboardController::class, 'logs']);
+$router->get('/home', [DashboardController::class, 'paginaInicial']); // Adicionado alias /home
 $router->get('/server-logs', [DashboardController::class, 'serverLogs']);
 $router->get('/db-monitor', [DashboardController::class, 'dbMonitor']);
 $router->get('/frontend', [DashboardController::class, 'frontend']);
@@ -29,12 +30,14 @@ $router->get('/cadastro-via-convite', [AuthController::class, 'mostrarCadastroVi
 $router->post('/webhook/asaas', [WebhookController::class, 'handleAsaas']);
 
 // Removido: $router->post('/cadastro-usuario', [DashboardController::class, 'cadastroUsuario']);
-$router->post('/cadastro-via-convite', [AuthController::class, 'cadastroViaConvite']); // Nova rota
+$router->get('/cadastro-via-convite', [AuthController::class, 'mostrarCadastroViaConvite']); // Nova rota GET
+$router->post('/cadastro-via-convite', [AuthController::class, 'cadastroViaConvite']); // Nova rota POST
 $router->post('/atualiza-usuario', [DashboardController::class, 'atualizaUsuario']);
 $router->get('/perfil/carregar', [DashboardController::class, 'carregaPerfil']); // Nova rota
 $router->get('/gerar-link-convite', [AuthController::class, 'gerarLinkConvite']); // Nova rota
 
 // Rotas de autenticação
+$router->get('/login', [DashboardController::class, 'paginaInicial']); // Adicionado para compatibilidade
 $router->post('/login', [AuthController::class, 'login']);
 $router->post('/logout', [AuthController::class, 'logout']);
 
@@ -46,12 +49,25 @@ $router->get('/vendedor', [VendedorController::class, 'dashboard']);
 $router->get('/operador', [OperadorController::class, 'dashboard']);
 $router->get('/cliente', [ClienteController::class, 'dashboard']);
 
+// Aliases para dashboards
+$router->get('/admin/dashboard', [AdminController::class, 'dashboard']);
+$router->get('/assinante/dashboard', [AssinanteController::class, 'dashboard']);
+$router->get('/vendedor/dashboard', [VendedorController::class, 'dashboard']);
+$router->get('/operador/dashboard', [OperadorController::class, 'dashboard']);
+$router->get('/cliente/dashboard', [ClienteController::class, 'dashboard']);
+
 // Rotas de créditos
-$router->get('/creditos', [CreditoController::class, 'mostrarGerenciarCreditos']);
-$router->get('/creditos/saldo', [CreditoController::class, 'getSaldo']);
-$router->get('/creditos/historico', [CreditoController::class, 'getHistoricoTransacoes']);
-$router->get('/creditos/perfis-transferencia', [CreditoController::class, 'getPerfisParaTransferencia']);
-$router->post('/creditos/transferir', [CreditoController::class, 'transferirCreditos']);
+// Rotas de créditos (Usuário)
+$router->get('/creditos', [CreditosController::class, 'index']);
+$router->get('/creditos/saldo', [CreditosController::class, 'getSaldo']); // Rota AJAX restaurada
+$router->get('/creditos/historico', [CreditosController::class, 'historico']);
+$router->post('/creditos/recarga', [CreditosController::class, 'criarCobranca']); // Nova rota Asaas
+$router->post('/creditos/comprar/{id}', [CreditosController::class, 'comprarCombo']);
+
+// Rotas de créditos (Admin)
+$router->get('/admin/gerenciar-creditos', [AdminController::class, 'gerenciarCreditos']);
+$router->get('/admin/historico-creditos/{id}', [AdminController::class, 'verHistorico']); // Nova rota
+$router->post('/admin/creditos/adicionar', [AdminController::class, 'adicionarCreditos']);
 
 // Rotas de usuários e convites
 $router->get('/usuarios/vendedores', [UsuarioController::class, 'getVendedoresDisponiveis']);
@@ -108,7 +124,7 @@ $router->get('/corrigir-admin', function () {
         
         // Verificar se já existe um perfil de admin para este usuário
         $stmt = $pdo->prepare("
-            SELECT p.id, p.status, p.creditos, p.hashConvite, p.hashAnfitriao, pa.nivel
+            SELECT p.id, p.status, p.hashConvite, p.hashAnfitriao, pa.nivel
             FROM integra_perfis p
             JOIN integra_papeis pa ON p.id_papel = pa.id
             WHERE p.id_usuario = ? AND pa.nivel = 'admin'
@@ -154,10 +170,10 @@ $router->get('/corrigir-admin', function () {
             
             // Criar perfil admin com hashAnfitriao NULL (primeiro usuário)
             $stmt = $pdo->prepare("
-                INSERT INTO integra_perfis (id_papel, id_usuario, creditos, hashConvite, hashAnfitriao, status)
-                VALUES (?, ?, ?, ?, ?, 'Ativo')
+                INSERT INTO integra_perfis (id_papel, id_usuario, hashConvite, hashAnfitriao, status)
+                VALUES (?, ?, ?, ?, 'Ativo')
             ");
-            $stmt->execute([$papel['id'], $adminId, 0.00, $hashConvite, NULL]);
+            $stmt->execute([$papel['id'], $adminId, $hashConvite, NULL]);
             $perfilId = $pdo->lastInsertId();
             
             echo "Perfil admin criado com ID: $perfilId\n";

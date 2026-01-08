@@ -160,7 +160,7 @@ class DashboardController
                             'id' => $usuarioAtualizado['id'],
                             'nome' => $usuarioAtualizado['nome'],
                             'email' => $usuarioAtualizado['email'],
-                            'nivel' => $usuarioAtualizado['papel_nivel'] ?? 'cliente'
+                            'nivel' => ($usuarioAtualizado['parent_id'] === null) ? 'admin' : 'cliente'
                         ];
                         
                         $novaSessao = \App\Utils\JWT::createSession($id, $novosDadosUsuario);

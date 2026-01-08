@@ -2,7 +2,7 @@
     <div class="card-header">
         <h3>
             <span class="card-icon">💰</span>
-            Meus Créditos
+            Carteira
         </h3>
     </div>
     <div class="card-content">
@@ -18,7 +18,7 @@
 
 <script>
     console.log('Carregando cartão de créditos...');
-    
+
     // Função para carregar o saldo de créditos
     async function carregarSaldoCreditos() {
         console.log('Tentando carregar saldo de créditos...');
@@ -60,7 +60,13 @@
 
 
     // Carregar o saldo quando a página for carregada
-    document.addEventListener('DOMContentLoaded', function() {
+    // Carregar o saldo quando a página for carregada ou exibida novamente (cache)
+    window.addEventListener('pageshow', function (event) {
+        console.log('Evento pageshow disparado. Persisted:', event.persisted);
+        carregarSaldoCreditos();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
         console.log('DOM carregado, tentando carregar saldo...');
         carregarSaldoCreditos();
     });

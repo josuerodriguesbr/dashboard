@@ -3,13 +3,53 @@
 
 // Função para obter a URL base dinamicamente
 function getBaseUrl() {
+    // Check if running from CLI
+    if (php_sapi_name() === 'cli') {
+        return 'http://localhost/projetos/dashboard'; // Default for CLI
+    }
+    
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'];
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     // Remove o nome do script e ajusta o caminho
     $scriptName = $_SERVER['SCRIPT_NAME'];
     $basePath = str_replace('/index.php', '', $scriptName);
     
     return $protocol . '://' . $host . $basePath;
+}
+
+if (!function_exists('cleanCPF')) {
+    /**
+     * Remove caracteres não numéricos do CPF e retorna null se inválido
+     */
+    function cleanCPF($cpf)
+    {
+        if (!$cpf) return null;
+        $cpf = preg_replace('/\D/', '', $cpf);
+        if (strlen($cpf) !== 11) {
+            error_log("[Helpers] CPF com número incorreto de dígitos: '$cpf'");
+            return null;
+        }
+        return $cpf;
+    }
+}
+
+if (!function_exists('isValidCPF')) {
+    /**
+     * Valida CPF com dígitos verificadores
+     */
+    function isValidCPF($cpf)
+    {
+        if (!$cpf) return false;
+        if (preg_match('/^(\d)\1+$/', $cpf)) return false;
+        for ($t = 9; $t < 11; $t++) {
+            for ($d = 0, $c = 0; $c < $t; $c++) {
+                $d += $cpf[$c] * (($t + 1) - $c);
+            }
+            $d = ((10 * $d) % 11) % 10;
+            if ($cpf[$c] != $d) return false;
+        }
+        return true;
+    }
 }
 
 function json_response($data, $status = 200) {

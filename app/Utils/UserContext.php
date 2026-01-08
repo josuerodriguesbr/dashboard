@@ -5,8 +5,8 @@ namespace App\Utils;
 class UserContext
 {
     private static $nivelAtivo = null;
-    private static $usuario = null;
     private static $perfilAtivo = null;
+    private static $usuario = null;
 
     /**
      * Define o nível ativo do usuário
@@ -26,6 +26,18 @@ class UserContext
      */
     public static function getNivelAtivo()
     {
+        // Se nivelAtivo não estiver setado, tenta pegar do usuario ou perfil
+        if (self::$nivelAtivo === null) {
+            if (isset(self::$perfilAtivo['papel_nivel'])) {
+                return self::$perfilAtivo['papel_nivel'];
+            }
+            if (isset(self::$usuario['papel_nivel'])) {
+                return self::$usuario['papel_nivel'];
+            }
+            if (isset(self::$usuario['nivel'])) {
+                return self::$usuario['nivel'];
+            }
+        }
         return self::$nivelAtivo;
     }
 
@@ -38,6 +50,12 @@ class UserContext
     public static function setUsuario($usuario)
     {
         self::$usuario = $usuario;
+        // Tenta inferir nivel
+        if (isset($usuario['papel_nivel'])) {
+            self::$nivelAtivo = $usuario['papel_nivel'];
+        } elseif (isset($usuario['nivel'])) {
+            self::$nivelAtivo = $usuario['nivel'];
+        }
     }
 
     /**
@@ -50,25 +68,15 @@ class UserContext
         return self::$usuario;
     }
 
-    /**
-     * Define o perfil ativo do usuário
-     *
-     * @param array $perfil
-     * @return void
-     */
-    public static function setPerfilAtivo($perfil)
-    {
+    public static function setPerfilAtivo($perfil) {
         self::$perfilAtivo = $perfil;
+        if (isset($perfil['papel_nivel'])) {
+            self::$nivelAtivo = $perfil['papel_nivel'];
+        }
     }
-
-    /**
-     * Obtém o perfil ativo do usuário
-     *
-     * @return array|null
-     */
-    public static function getPerfilAtivo()
-    {
-        return self::$perfilAtivo;
+    
+    public static function getPerfilAtivo() { 
+        return self::$perfilAtivo; 
     }
 
     /**
@@ -79,7 +87,7 @@ class UserContext
     public static function limpar()
     {
         self::$nivelAtivo = null;
-        self::$usuario = null;
         self::$perfilAtivo = null;
+        self::$usuario = null;
     }
 }

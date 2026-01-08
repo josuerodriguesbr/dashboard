@@ -247,15 +247,24 @@ $__rota_dashboard = (is_array($usuario) && isset($usuario['nivel'])) ? getRotaPo
             })
             .then(response => response.json())
             .then(data => {
+                // Limpeza redundante de cookies no cliente
+                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard;";
                 document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard/;";
+                
+                // Redirecionar com timestamp para evitar cache
                 setTimeout(() => {
-                    window.location.href = '/projetos/dashboard/';
+                    window.location.href = '/projetos/dashboard/?t=' + new Date().getTime();
                 }, 100);
             })
             .catch(error => {
                 console.error('Erro ao fazer logout:', error);
+                // Forçar limpeza mesmo com erro
+                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard;";
                 document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard/;";
-                window.location.href = '/projetos/dashboard/';
+                
+                window.location.href = '/projetos/dashboard/?t=' + new Date().getTime();
             });
         }
     }

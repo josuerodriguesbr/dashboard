@@ -2,278 +2,90 @@
 namespace App\Models;
 
 use Config\Database;
-use App\Models\Perfil;
+use PDO;
 
 class CreditoTransacao
 {
     /**
-     * Realiza uma transferência de créditos entre perfis
+     * Cria uma nova transação de crédito e atualiza o saldo do usuário
+     * 
+     * @param int $usuarioId ID do usuário
+     * @param int $tipoId ID do tipo de transação (1=Recarga, 2=Consumo, etc)
+     * @param int $valorNominal Valor da transação (positivo para crédito, negativo para débito)
+     * @param string $descricao Descrição da transação
+     * @param int|null $recargaId ID da recarga relacionada (opcional)
+     * @return int ID da transação criada
      */
-    public static function transferirCreditos($origemPerfilId, $destinoPerfilId, $valor, $descricao = '', $referenciaExterna = null)
+    public static function criar($usuarioId, $tipoId, $valorNominal, $descricao, $recargaId = null)
     {
         $pdo = Database::getConnection();
         
         try {
-            // Validar os parâmetros
-            if ($valor <= 0) {
-                throw new \Exception('Valor da transferência deve ser maior que zero');
-            }
-            
-            // Verificar se os perfis existem
-            $perfilOrigem = Perfil::getPerfilPorId($origemPerfilId);
-            $perfilDestino = Perfil::getPerfilPorId($destinoPerfilId);
-            
-            if (!$perfilOrigem) {
-                throw new \Exception('Perfil de origem não encontrado');
-            }
-            
-            if (!$perfilDestino) {
-                throw new \Exception('Perfil de destino não encontrado');
-            }
-            
-            // Verificar se os perfis pertencem à mesma árvore hierárquica
-            if (!Perfil::pertencemMesmaArvore($origemPerfilId, $destinoPerfilId)) {
-                throw new \Exception('Transferência não permitida - perfis não pertencem à mesma árvore hierárquica');
-            }
-            
-            // Verificar se o perfil de origem tem saldo suficiente
-            $saldoOrigem = self::getSaldoPerfil($origemPerfilId);
-            if ($saldoOrigem < $valor) {
-                throw new \Exception('Saldo insuficiente para a transferência');
-            }
-            
-            // Iniciar transação
             $pdo->beginTransaction();
+
+            // 1. Atualizar Carteira
+            $carteiraModel = new Carteira($pdo);
+            // $valorNominal já deve vir com sinal correto (negativo para consumo)
+            // Mas dependendo da regra, o model de Carteira soma o que vier.
             
-            // Atualizar saldos
-            self::atualizarSaldo($origemPerfilId, $saldoOrigem - $valor);
+            // SE a lógica anterior usava multiplicador do TIPO, precisamos manter isso?
+            // O novo schema tem `integra_cred_trans_tipos.multiplicador`.
+            // Vamos buscar o multiplicador para garantir.
             
-            $saldoDestino = self::getSaldoPerfil($destinoPerfilId);
-            self::atualizarSaldo($destinoPerfilId, $saldoDestino + $valor);
+            $stmtTipo = $pdo->prepare("SELECT multiplicador FROM integra_cred_trans_tipos WHERE id = ?");
+            $stmtTipo->execute([$tipoId]);
+            $tipo = $stmtTipo->fetch(PDO::FETCH_ASSOC);
+            $multiplicador = $tipo ? $tipo['multiplicador'] : 1;
             
-            // Registrar a transação
+            // O valor final a impactar no saldo
+            $impactoSaldo = $valorNominal * $multiplicador;
+            
+            // Atualiza saldo e pega o novo saldo para registrar
+            $carteiraModel->updateSaldo($usuarioId, $impactoSaldo);
+            $novaCarteira = $carteiraModel->getByUserId($usuarioId);
+            $saldoApos = $novaCarteira['saldo_atual'];
+            
+            // 2. Registrar Transação
             $stmt = $pdo->prepare("
-                INSERT INTO integra_transacoes 
-                (tipo, origem_perfil_id, destino_perfil_id, valor, descricao, referencia_externa, status, createdAt) 
-                VALUES 
-                ('transferencia', ?, ?, ?, ?, ?, 'confirmado', NOW())
+                INSERT INTO integra_credito_transacoes 
+                (usuario_id, tipo_id, valor_nominal, saldo_apos, descricao, recarga_id, createdAt) 
+                VALUES (?, ?, ?, ?, ?, ?, NOW())
             ");
             
             $stmt->execute([
-                $origemPerfilId, 
-                $destinoPerfilId, 
-                $valor, 
-                $descricao, 
-                $referenciaExterna
+                $usuarioId,
+                $tipoId,
+                $valorNominal, // Registramos o valor nominal da operação
+                $saldoApos,
+                $descricao,
+                $recargaId
             ]);
             
             $transacaoId = $pdo->lastInsertId();
             
-            // Confirmar transação
             $pdo->commit();
-            
-            return [
-                'success' => true,
-                'transacao_id' => $transacaoId,
-                'mensagem' => 'Transferência realizada com sucesso'
-            ];
+            return $transacaoId;
             
         } catch (\Exception $e) {
-            // Reverter transação em caso de erro
-            if ($pdo->inTransaction()) {
-                $pdo->rollback();
-            }
-            
-            error_log("CreditoTransacao::transferirCreditos falhou: " . $e->getMessage());
+            $pdo->rollBack();
             throw $e;
         }
     }
 
-    /**
-     * Obtém o saldo de um perfil
-     */
-    public static function getSaldoPerfil($perfilId)
+    public static function getHistorico($usuarioId, $limite = 50)
     {
         $pdo = Database::getConnection();
         
-        try {
-            $stmt = $pdo->prepare("
-                SELECT creditos 
-                FROM integra_perfis 
-                WHERE id = ?
-            ");
-            $stmt->execute([$perfilId]);
-            $result = $stmt->fetch();
-            
-            return $result ? (float)$result['creditos'] : 0.00;
-        } catch (\Exception $e) {
-            error_log("CreditoTransacao::getSaldoPerfil falhou: " . $e->getMessage());
-            return 0.00;
-        }
-    }
-
-    /**
-     * Atualiza o saldo de um perfil
-     */
-    public static function atualizarSaldo($perfilId, $novoSaldo)
-    {
-        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("
+            SELECT t.*, tp.nome as tipo_nome, tp.multiplicador
+            FROM integra_credito_transacoes t
+            JOIN integra_cred_trans_tipos tp ON t.tipo_id = tp.id
+            WHERE t.usuario_id = ?
+            ORDER BY t.createdAt DESC
+            LIMIT ?
+        ");
         
-        try {
-            // Atualizar diretamente a coluna creditos na tabela integra_perfis
-            $stmt = $pdo->prepare("
-                UPDATE integra_perfis 
-                SET creditos = ?, updatedAt = NOW() 
-                WHERE id = ?
-            ");
-            $stmt->execute([$novoSaldo, $perfilId]);
-            
-            // Verificar se a atualização afetou alguma linha
-            if ($stmt->rowCount() === 0) {
-                throw new \Exception("Perfil ID {$perfilId} não encontrado");
-            }
-        } catch (\Exception $e) {
-            error_log("CreditoTransacao::atualizarSaldo falhou: " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Adiciona créditos a um perfil (entrada)
-     */
-    public static function adicionarCreditos($perfilId, $valor, $descricao = '', $referenciaExterna = null, $tipo = 'entrada')
-    {
-        $pdo = Database::getConnection();
-        
-        try {
-            if ($valor <= 0) {
-                throw new \Exception('Valor deve ser maior que zero');
-            }
-            
-            $pdo->beginTransaction();
-            
-            $saldoAtual = self::getSaldoPerfil($perfilId);
-            $novoSaldo = $saldoAtual + $valor;
-            
-            self::atualizarSaldo($perfilId, $novoSaldo);
-            
-            $stmt = $pdo->prepare("
-                INSERT INTO integra_transacoes 
-                (tipo, origem_perfil_id, destino_perfil_id, valor, descricao, referencia_externa, status, createdAt) 
-                VALUES 
-                (?, NULL, ?, ?, ?, ?, 'confirmado', NOW())
-            ");
-            
-            $stmt->execute([
-                $tipo, 
-                $perfilId, 
-                $valor, 
-                $descricao, 
-                $referenciaExterna
-            ]);
-            
-            $transacaoId = $pdo->lastInsertId();
-            $pdo->commit();
-            
-            return [
-                'success' => true,
-                'transacao_id' => $transacaoId,
-                'mensagem' => 'Créditos adicionados com sucesso'
-            ];
-            
-        } catch (\Exception $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollback();
-            }
-            
-            error_log("CreditoTransacao::adicionarCreditos falhou: " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Remove créditos de um perfil (saída)
-     */
-    public static function removerCreditos($perfilId, $valor, $descricao = '', $referenciaExterna = null, $tipo = 'saida')
-    {
-        $pdo = Database::getConnection();
-        
-        try {
-            if ($valor <= 0) {
-                throw new \Exception('Valor deve ser maior que zero');
-            }
-            
-            $saldoAtual = self::getSaldoPerfil($perfilId);
-            if ($saldoAtual < $valor) {
-                throw new \Exception('Saldo insuficiente');
-            }
-            
-            $pdo->beginTransaction();
-            
-            $novoSaldo = $saldoAtual - $valor;
-            self::atualizarSaldo($perfilId, $novoSaldo);
-            
-            $stmt = $pdo->prepare("
-                INSERT INTO integra_transacoes 
-                (tipo, origem_perfil_id, destino_perfil_id, valor, descricao, referencia_externa, status, createdAt) 
-                VALUES 
-                (?, ?, NULL, ?, ?, ?, 'confirmado', NOW())
-            ");
-            
-            $stmt->execute([
-                $tipo, 
-                $perfilId, 
-                $valor, 
-                $descricao, 
-                $referenciaExterna
-            ]);
-            
-            $transacaoId = $pdo->lastInsertId();
-            $pdo->commit();
-            
-            return [
-                'success' => true,
-                'transacao_id' => $transacaoId,
-                'mensagem' => 'Créditos removidos com sucesso'
-            ];
-            
-        } catch (\Exception $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollback();
-            }
-            
-            error_log("CreditoTransacao::removerCreditos falhou: " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Obtém o histórico de transações de um perfil
-     */
-    public static function getHistoricoTransacoes($perfilId, $limite = 50)
-    {
-        $pdo = Database::getConnection();
-        
-        try {
-            $stmt = $pdo->prepare("
-                SELECT t.*, 
-                       po.nome as nome_origem, po.email as email_origem,
-                       pd.nome as nome_destino, pd.email as email_destino
-                FROM integra_transacoes t
-                LEFT JOIN integra_perfis p_origem ON t.origem_perfil_id = p_origem.id
-                LEFT JOIN integra_usuarios po ON p_origem.id_usuario = po.id
-                LEFT JOIN integra_perfis p_destino ON t.destino_perfil_id = p_destino.id
-                LEFT JOIN integra_usuarios pd ON p_destino.id_usuario = pd.id
-                WHERE t.origem_perfil_id = ? OR t.destino_perfil_id = ?
-                ORDER BY t.createdAt DESC
-                LIMIT ?
-            ");
-            $stmt->execute([$perfilId, $perfilId, $limite]);
-            
-            return $stmt->fetchAll();
-        } catch (\Exception $e) {
-            error_log("CreditoTransacao::getHistoricoTransacoes falhou: " . $e->getMessage());
-            return [];
-        }
+        $stmt->execute([$usuarioId, $limite]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

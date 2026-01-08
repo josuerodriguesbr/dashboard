@@ -15,44 +15,49 @@ class Router
     }
 
     public function resolve($path, $method) {
-        // $path já vem limpo do index.php
         $path = '/' . ltrim($path, '/');
 
+        // 1. Tentativa de match exato (performance)
         if (isset($this->routes[$method][$path])) {
-            $action = $this->routes[$method][$path];
-            if (is_array($action)) {
-                [$controller, $method] = $action;
-                $controllerInstance = new $controller();
-                
-                // Verificar se o método existe
-                if (method_exists($controllerInstance, $method)) {
-                    // Obter informações do método para determinar se ele aceita parâmetros
-                    $reflection = new \ReflectionMethod($controllerInstance, $method);
-                    $parameters = $reflection->getParameters();
-                    
-                    // Se o método não aceitar parâmetros ou todos forem opcionais, chamar sem parâmetros
-                    if (count($parameters) === 0 || $parameters[0]->isDefaultValueAvailable()) {
-                        $result = $controllerInstance->$method();
-                    } else {
-                        // Passar parâmetros mockados para os métodos que os esperam
-                        $result = $controllerInstance->$method(null, null, null);
-                    }
-                    
-                    // Se o método retornou um resultado (como um response), tentar enviar
-                    if ($result !== null && method_exists($result, 'send')) {
-                        $result->send();
-                    }
-                } else {
-                    http_response_code(404);
-                    echo "Método não encontrado.";
+            $this->dispatch($this->routes[$method][$path]);
+            return;
+        }
+
+        // 2. Tentativa de match com parâmetros (Regex)
+        foreach ($this->routes[$method] as $route => $action) {
+            // Converte {param} para regex (ex: {id} -> ([^/]+))
+            if (strpos($route, '{') !== false) {
+                // Escapa a rota para regex, mas mantendo os grupos {param}
+                $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '([^/]+)', $route);
+                $pattern = "#^" . $pattern . "$#";
+
+                if (preg_match($pattern, $path, $matches)) {
+                    array_shift($matches); // Remove o match completo, mantém só os grupos capturados
+                    $this->dispatch($action, $matches);
+                    return;
                 }
-            } elseif (is_callable($action)) {
-                // Se for uma função anônima
-                $action();
             }
-        } else {
-            http_response_code(404);
-            echo "Página não encontrada.";
+        }
+
+        http_response_code(404);
+        echo "Página não encontrada.";
+    }
+
+    private function dispatch($action, $params = [])
+    {
+        if (is_array($action)) {
+            [$controller, $method] = $action;
+            $controllerInstance = new $controller();
+            
+            if (method_exists($controllerInstance, $method)) {
+                // Passa os parâmetros capturados para o método
+                call_user_func_array([$controllerInstance, $method], $params);
+            } else {
+                http_response_code(404);
+                echo "Método não encontrado.";
+            }
+        } elseif (is_callable($action)) {
+            call_user_func_array($action, $params);
         }
     }
 }

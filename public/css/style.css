@@ -2,31 +2,48 @@
 /* Para alternar o tema, basta adicionar/remover a classe tema-claro no <html> ou <body> via JavaScript: */
 
 /* Tema Padrão (Escuro) */
- :root {
-  --cor-fundo: #0f172a; /* slate-900 */
-  --cor-texto: #f1f5f9; /* slate-100 */
-  --cor-texto-secundario: #94a3b8; /* slate-400 */
-  --cor-borda: #334155; /* slate-700 */
-  --cor-fundo-input: #1e293b; /* slate-800 */
+:root {
+  --cor-fundo: #0f172a;
+  /* slate-900 */
+  --cor-texto: #f1f5f9;
+  /* slate-100 */
+  --cor-texto-secundario: #94a3b8;
+  /* slate-400 */
+  --cor-borda: #334155;
+  /* slate-700 */
+  --cor-fundo-input: #1e293b;
+  /* slate-800 */
   --cor-fundo-card: #1e293b;
-  --cor-botao: #60a5fa; /* blue-400 */
-  --cor-botao-hover: #3b82f6; /* blue-500 */
-  --cor-erro: #f87171; /* red-400 */
-  --cor-sucesso: #34d399; /* emerald-400 */
+  --cor-botao: #60a5fa;
+  /* blue-400 */
+  --cor-botao-hover: #3b82f6;
+  /* blue-500 */
+  --cor-erro: #f87171;
+  /* red-400 */
+  --cor-sucesso: #34d399;
+  /* emerald-400 */
 }
 
 /* Tema Claro (ativado com .tema-claro no <html>) */
 .tema-claro {
   --cor-fundo: #ffffff;
-  --cor-texto: #1e293b; /* slate-800 */
-  --cor-texto-secundario: #64748b; /* slate-500 */
-  --cor-borda: #e2e8f0; /* slate-200 */
-  --cor-fundo-input: #f8fafc; /* slate-50 */
+  --cor-texto: #1e293b;
+  /* slate-800 */
+  --cor-texto-secundario: #64748b;
+  /* slate-500 */
+  --cor-borda: #e2e8f0;
+  /* slate-200 */
+  --cor-fundo-input: #f8fafc;
+  /* slate-50 */
   --cor-fundo-card: #ffffff;
-  --cor-botao: #3b82f6; /* blue-500 */
-  --cor-botao-hover: #2563eb; /* blue-600 */
-  --cor-erro: #ef4444; /* red-500 */
-  --cor-sucesso: #10b981; /* emerald-500 */
+  --cor-botao: #3b82f6;
+  /* blue-500 */
+  --cor-botao-hover: #2563eb;
+  /* blue-600 */
+  --cor-erro: #ef4444;
+  /* red-500 */
+  --cor-sucesso: #10b981;
+  /* emerald-500 */
 }
 
 /* Estilos base da página */
@@ -54,7 +71,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: calc(60px); /* Altura do header + seu padding */
+  padding-top: calc(60px);
+  /* Altura do header + seu padding */
 }
 
 /* Container centralizado (para formulários, cards) */
@@ -82,7 +100,7 @@ body {
    CLASSES UTILITÁRIAS
    ======================================== */
 
-   /* Centralização de conteúdo */
+/* Centralização de conteúdo */
 .centro-horizontal {
   text-align: center;
 }
@@ -118,96 +136,98 @@ header {
   left: 0;
   height: 60px;
   width: 100%;
-  z-index: 1000; /* Reduzido para garantir que as notificações fiquem acima */
+  z-index: 1000;
+  /* Reduzido para garantir que as notificações fiquem acima */
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #2c3e50;
   color: white;
-  padding: 0.5rem; /* Reduzido o padding para manter o cabeçalho com altura mais previsível */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 0.5rem;
+  /* Reduzido o padding para manter o cabeçalho com altura mais previsível */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 /* Remova a regra .header duplicada na seção de responsividade desktop e atualize para: */
-  
-  .header-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-  }
-  
-  .logo-icon {
-      font-size: 24px;
-      color: #3498db;
-  }
-  
-  .logo-text {
-      font-size: 20px;
-      font-weight: 500;
-  }
-  
-  .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-  }
-  
-  .logout-btn {
-      background: #e74c3c;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: background 0.3s;
-  }
-  
-  .logout-btn:hover {
-      background: #c0392b;
-  }
-  
-  .user-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-  }
-  
-  .user-name {
-      font-size: 14px;
-      opacity: 0.9;
-  }
-  
-  .profile-link {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      background: #3498db;
-      border-radius: 50%;
-      color: white;
-      text-decoration: none;
-      font-size: 16px;
-      transition: background 0.3s;
-  }
-  
-  .profile-link:hover {
-      background: #2980b9;
-  }
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  font-size: 24px;
+  color: #3498db;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.logout-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.logout-btn:hover {
+  background: #c0392b;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-name {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.profile-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #3498db;
+  border-radius: 50%;
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+  transition: background 0.3s;
+}
+
+.profile-link:hover {
+  background: #2980b9;
+}
 
 .logo-link {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    color: inherit;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 .logo-link:hover {
-    color: #3498db;
-}  
+  color: #3498db;
+}
 
 
 /* Botão Voltar (mantém-se dentro do tema claro/escuro) */
@@ -226,11 +246,11 @@ header {
 }
 
 .back-btn:hover {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .tema-claro .back-btn:hover {
-  background: rgba(0,0,0,0.04);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 
@@ -282,7 +302,8 @@ section {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: calc(100vh - 120px); /* Ajusta para ocupar altura disponível */
+  min-height: calc(100vh - 120px);
+  /* Ajusta para ocupar altura disponível */
   padding: 1rem;
 }
 
@@ -305,7 +326,9 @@ footer {
    ======================================== */
 
 /* Desabilita transição em alguns elementos para evitar "flickering" */
-input, textarea, select {
+input,
+textarea,
+select {
   transition: none;
 }
 
@@ -427,7 +450,7 @@ input, textarea, select {
 /* ========================================
    MENSAGENS DO SISTEMA (Compatibilidade)
    ======================================== */
-   
+
 /* Mensagens de sistema - Mantendo compatibilidade com código existente */
 .mensagem-sistema {
   text-align: center;
@@ -467,11 +490,13 @@ input, textarea, select {
 .link-primario a {
   color: var(--cor-botao);
   text-decoration: none;
-  font-weight: 400; /* Fonte mais fina - alterado de 500 para 400 */
+  font-weight: 400;
+  /* Fonte mais fina - alterado de 500 para 400 */
   padding: 0.5rem;
   border-radius: 0.25rem;
   transition: background-color 0.2s, color 0.2s;
-  font-size: 0.875rem; /* Tamanho de fonte um pouco menor */
+  font-size: 0.875rem;
+  /* Tamanho de fonte um pouco menor */
 }
 
 .link-primario a:hover {
@@ -568,7 +593,8 @@ input, textarea, select {
 }
 
 .btn-icon:hover {
-  background-color: #dc2626; /* red-600 - constante para ambos temas */
+  background-color: #dc2626;
+  /* red-600 - constante para ambos temas */
 }
 
 .btn-icon:focus {
@@ -600,11 +626,13 @@ input, textarea, select {
 /* ========================================
    BOTÕES - GRADE
    ======================================== */
-   /* Grade para botões */
+/* Grade para botões */
 .grade-botao {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 colunas iguais */
-  gap: 1rem; /* Espaçamento entre as células */
+  grid-template-columns: repeat(3, 1fr);
+  /* 3 colunas iguais */
+  gap: 1rem;
+  /* Espaçamento entre as células */
   padding: 1rem;
 }
 
@@ -616,6 +644,12 @@ input, textarea, select {
   font-size: 0.875rem;
 }
 
+.col-acao {
+  width: 15%;
+  min-width: 120px;
+  /* text-align: right; -> Removido a pedido do usuário */
+}
+
 
 /* ========================================
    MENSAGENS DE FEEDBACK TEMPORÁRIAS
@@ -624,9 +658,11 @@ input, textarea, select {
 /* Container para mensagens flutuantes */
 .feedback-container {
   position: fixed;
-  top: 70px; /* Ajustado para aparecer logo abaixo do cabeçalho que tem 60px de altura */
+  top: 70px;
+  /* Ajustado para aparecer logo abaixo do cabeçalho que tem 60px de altura */
   right: 20px;
-  z-index: 9999; /* Garantir que as notificações fiquem acima de todos os elementos */
+  z-index: 9999;
+  /* Garantir que as notificações fiquem acima de todos os elementos */
   width: 320px;
   max-width: calc(100vw - 40px);
 }
@@ -718,7 +754,8 @@ input, textarea, select {
 
 .feedback-alerta {
   background-color: var(--cor-fundo-card);
-  border-left: 4px solid #fbbf24; /* amarelo-400 */
+  border-left: 4px solid #fbbf24;
+  /* amarelo-400 */
   color: var(--cor-texto);
 }
 
@@ -738,7 +775,8 @@ input, textarea, select {
 }
 
 .feedback-alerta .feedback-icone {
-  color: #fbbf24; /* amarelo-400 */
+  color: #fbbf24;
+  /* amarelo-400 */
 }
 
 .feedback-info .feedback-icone {
@@ -803,8 +841,13 @@ input, textarea, select {
 }
 
 @keyframes progresso {
-  from { width: 100%; }
-  to { width: 0%; }
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 0%;
+  }
 }
 
 
@@ -818,16 +861,17 @@ input, textarea, select {
   }
 
   .feedback-container {
-    top: 70px; /* Ajuste para dispositivos móveis */
+    top: 70px;
+    /* Ajuste para dispositivos móveis */
     right: 10px;
     left: 10px;
     width: auto;
   }
-  
+
   .feedback-mensagem {
     padding: 0.75rem;
-  }  
-  
+  }
+
 }
 
 /* ========================================
@@ -838,13 +882,15 @@ input, textarea, select {
   header {
     margin: 0px;
     border-radius: 0px;
-    width: calc(100%); /* Compensa as margens laterais */
+    width: calc(100%);
+    /* Compensa as margens laterais */
   }
 
   .container-pagina {
-    padding-top: calc(60px + 1rem); /* Considera a altura do header no desktop */
+    padding-top: calc(60px + 1rem);
+    /* Considera a altura do header no desktop */
   }
- 
+
 }
 
 /* Iframes */
@@ -855,3 +901,136 @@ input, textarea, select {
   display: block;
 }
 
+
+/* ========================================
+   LISTAS DE CARTÕES PADRONIZADAS
+   ======================================== */
+
+.lista-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  /* Espaço para scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--cor-borda) var(--cor-fundo-input);
+}
+
+.lista-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.lista-container::-webkit-scrollbar-track {
+  background: var(--cor-fundo-input);
+  border-radius: 4px;
+}
+
+.lista-container::-webkit-scrollbar-thumb {
+  background-color: var(--cor-borda);
+  border-radius: 4px;
+}
+
+.cartao-padrao {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  /* Conteúdo | Ações */
+  gap: 1rem;
+  align-items: center;
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.cartao-padrao:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-color: var(--cor-botao);
+}
+
+.cartao-conteudo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  align-items: center;
+}
+
+.cartao-info-grupo {
+  display: flex;
+  flex-direction: column;
+}
+
+.cartao-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--cor-texto-secundario);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.cartao-valor {
+  font-size: 0.95rem;
+  color: var(--cor-texto);
+  font-weight: 500;
+}
+
+.cartao-valor.destaque {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--cor-botao);
+}
+
+.cartao-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-left: 1px solid var(--cor-borda);
+  padding-left: 1rem;
+  min-width: 120px;
+  justify-content: center;
+}
+
+/* Responsividade para telas pequenas */
+@media (max-width: 768px) {
+  .cartao-padrao {
+    grid-template-columns: 1fr;
+    /* Stack vertical */
+  }
+
+  .cartao-acoes {
+    border-left: none;
+    border-top: 1px solid var(--cor-borda);
+    padding-left: 0;
+    padding-top: 1rem;
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+/* Coluna de Ações */
+.coluna-acoes {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Barra de Ferramentas (Filtros e Botões) */
+.barra-ferramentas {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.grupo-filtros {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+  max-width: 600px;
+}
