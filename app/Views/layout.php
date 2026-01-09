@@ -50,12 +50,12 @@
                 
                 // Lista de páginas onde o botão de voltar não deve aparecer
                 $paginasSemBotaoVoltar = [
-                    '/projetos/dashboard/',
-                    '/projetos/dashboard/admin',
-                    '/projetos/dashboard/assinante',
-                    '/projetos/dashboard/cliente',
-                    '/projetos/dashboard/operador',
-                    '/projetos/dashboard/vendedor'
+                    getBasePath() . '/',
+                    getBasePath() . '/admin',
+                    getBasePath() . '/assinante',
+                    getBasePath() . '/cliente',
+                    getBasePath() . '/operador',
+                    getBasePath() . '/vendedor'
                 ];
                 
                 // Verificar se a página atual está na lista de páginas sem botão voltar
@@ -124,7 +124,7 @@
 // Evita notices quando $usuario pode ser false (boolean) em vez de array
 $__usuario_nivel = (is_array($usuario) && isset($usuario['nivel'])) ? $usuario['nivel'] : 'cliente';
 $__usuario_nome = (is_array($usuario)) ? ($usuario['nome'] ?? $usuario['name'] ?? 'Usuário') : 'Usuário';
-$__rota_dashboard = (is_array($usuario) && isset($usuario['nivel'])) ? getRotaPorUserNivel($usuario['nivel']) : '/projetos/dashboard/';
+$__rota_dashboard = (is_array($usuario) && isset($usuario['nivel'])) ? getRotaPorUserNivel($usuario['nivel']) : getBasePath() . '/';
 ?>
 
 <script>
@@ -265,10 +265,11 @@ $__rota_dashboard = (is_array($usuario) && isset($usuario['nivel'])) ? getRotaPo
                 console.error('Erro ao fazer logout:', error);
                 // Forçar limpeza mesmo com erro
                 document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard;";
-                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/projetos/dashboard/;";
+                const basePath = '<?= getBasePath() ?>';
+                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=" + basePath + ";";
+                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=" + basePath + "/;";
                 
-                window.location.href = '/projetos/dashboard/?t=' + new Date().getTime();
+                window.location.href = basePath + '/?t=' + new Date().getTime();
             });
         }
     }

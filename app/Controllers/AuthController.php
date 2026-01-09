@@ -33,13 +33,14 @@ class AuthController
             if ($sessionData) {
                 setcookie('authToken', $sessionData['token'], [
                     'expires' => time() + JWT_EXPIRE,
-                    'path' => '/projetos/dashboard/',
+                    'path' => getBasePath() . '/',
                     'secure' => false,
                     'samesite' => 'Lax'
                 ]);
 
                 // Redirecionamento baseado no nível
-                $redirect = ($resultado['usuario']['nivel'] === 'admin') ? '/projetos/dashboard/admin/dashboard' : '/projetos/dashboard/home';
+                $basePath = getBasePath();
+                $redirect = ($resultado['usuario']['nivel'] === 'admin') ? $basePath . '/admin/dashboard' : $basePath . '/home';
                 
                 echo json_encode([
                     'success' => true,
@@ -150,12 +151,12 @@ class AuthController
             if ($resultado['success']) {
                 setcookie('authToken', $resultado['token'], [
                     'expires' => time() + JWT_EXPIRE,
-                    'path' => '/projetos/dashboard/',
+                    'path' => getBasePath() . '/',
                     'secure' => false,
                     'samesite' => 'Lax'
                 ]);
                 
-                $redirect = '/projetos/dashboard/home';
+                $redirect = getBasePath() . '/home';
                 
                 echo json_encode([
                     'success' => true,
