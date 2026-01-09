@@ -24,7 +24,7 @@ class Database
             // Detecção de ambiente VPS (Produção)
             if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'vendasys.com.br') !== false) {
                 $dsn = "mysql:host=localhost;dbname=vendasys;charset=utf8mb4";
-                $usuario = "dashboard_user";
+                $usuario = "josuerodrigues";
                 $senha = "SuaSenhaForte123";
             }
 
