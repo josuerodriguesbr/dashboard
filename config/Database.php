@@ -25,7 +25,7 @@ class Database
             if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'vendasys.com.br') !== false) {
                 $dsn = "mysql:host=localhost;dbname=vendasys;charset=utf8mb4";
                 $usuario = "josuerodrigues";
-                $senha = "SuaSenhaForte123";
+                $senha = "RootJRP@2026";
             }
 
             try {

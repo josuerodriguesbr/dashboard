@@ -16,7 +16,7 @@ echo "<p><strong>É ambiente VPS?</strong> " . ($isVps ? "<span style='color:gre
 if ($isVps) {
     $dsn = "mysql:host=localhost;dbname=vendasys;charset=utf8mb4";
     $usuario = "josuerodrigues";
-    $senha = "SuaSenhaForte123";
+    $senha = "RootJRP@2026";
     echo "<p>Tentando conectar no banco <code>vendasys</code> com usuário <code>josuerodrigues</code>...</p>";
 } else {
     $dsn = "mysql:host=localhost;dbname=dashboard;charset=utf8mb4";
