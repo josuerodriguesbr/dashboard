@@ -21,6 +21,13 @@ class Database
             $usuario = "root";
             $senha = "";
 
+            // Detecção de ambiente VPS (Produção)
+            if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'vendasys.com.br') !== false) {
+                $dsn = "mysql:host=localhost;dbname=vendasys;charset=utf8mb4";
+                $usuario = "dashboard_user";
+                $senha = "SuaSenhaForte123";
+            }
+
             try {
                 self::$instance = new \PDO($dsn, $usuario, $senha, [
                     \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
