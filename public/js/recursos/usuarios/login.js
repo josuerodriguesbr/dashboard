@@ -1,5 +1,5 @@
 // public/js/recursos/usuarios/login.js
-import { focusFirstVisible } from '../../../funcoes.js';
+import { focusFirstVisible } from '../../funcoes.js';
 
 async function verificarSessaoExistente() {
   try {
