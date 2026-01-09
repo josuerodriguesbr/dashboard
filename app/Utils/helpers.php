@@ -1,20 +1,28 @@
 <?php
 // /app/Utils/helpers.php
 
+// Função para obter o caminho base (path) relativo ao domínio
+if (!function_exists('getBasePath')) {
+    function getBasePath() {
+        if (php_sapi_name() === 'cli') {
+            return '/projetos/dashboard'; 
+        }
+        $scriptName = $_SERVER['SCRIPT_NAME'];
+        return str_replace('/index.php', '', $scriptName);
+    }
+}
+
 // Função para obter a URL base dinamicamente
 function getBaseUrl() {
     // Check if running from CLI
     if (php_sapi_name() === 'cli') {
-        return 'http://localhost/projetos/dashboard'; // Default for CLI
+        return 'http://localhost' . getBasePath(); 
     }
     
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    // Remove o nome do script e ajusta o caminho
-    $scriptName = $_SERVER['SCRIPT_NAME'];
-    $basePath = str_replace('/index.php', '', $scriptName);
     
-    return $protocol . '://' . $host . $basePath;
+    return $protocol . '://' . $host . getBasePath();
 }
 
 if (!function_exists('cleanCPF')) {
@@ -73,8 +81,7 @@ if (!function_exists('redirect')) {
      * Redireciona para uma URL relativa, considerando subdiretórios
      */
     function redirect($url) {
-        $base = dirname($_SERVER['SCRIPT_NAME']);
-        $base = ($base === '/' || $base === '\\') ? '' : $base;
+        $base = getBasePath();
         header('Location: ' . $base . $url);
         exit;
     }
@@ -135,7 +142,7 @@ if (!function_exists('getRotaPorUserNivel')) {
      * @return string Rota do dashboard
      */
     function getRotaPorUserNivel($nivel) {
-        $basePath = '/projetos/dashboard';
+        $basePath = getBasePath();
         
         // Verificar se o nível foi fornecido
         if (empty($nivel)) {
@@ -166,7 +173,7 @@ if (!function_exists('getRotaPorPapel')) {
      * @return string Rota do dashboard
      */
     function getRotaPorPapel($papel) {
-        $basePath = '/projetos/dashboard';
+        $basePath = getBasePath();
         
         switch ($papel) {
             case 'admin':
