@@ -21,7 +21,7 @@
     <?php if (defined('CSS_PATH') && !empty(CSS_PATH)): ?>
         <link rel="stylesheet" href="<?= CSS_PATH ?>" />
     <?php else: ?>
-        <link rel="stylesheet" href="/projetos/dashboard/public/css/style.css" />
+        <link rel="stylesheet" href="<?= getBasePath() ?>/public/css/style.css" />
     <?php endif; ?>
 
 </head>
@@ -43,7 +43,7 @@
 
             <h2 class="centro-horizontal">Seja bem vindo!</h2>
             <div id="loadingMessage" class="mensagem-sistema mensagem-sucesso">Verificando sessão...</div>
-            <form id="loginForm" class="conteudo-centralizado">
+            <form id="loginForm" class="conteudo-centralizado" method="POST">
                 <div class="campoDeEmail">
                     <label for="email">E-mail:</label>
                     <input type="email" id="email" name="email" required>
@@ -73,7 +73,8 @@
  
 
     <!-- Módulo específico da página de login -->
-    <script type="module" src="/projetos/dashboard/public/js/recursos/usuarios/login.js"></script>
+    <!-- Módulo específico da página de login -->
+    <script type="module" src="<?= getBasePath() ?>/public/js/recursos/usuarios/login.js"></script>
 </body>
 </html>
 ```

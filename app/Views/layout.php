@@ -308,19 +308,19 @@ $__rota_dashboard = (is_array($usuario) && isset($usuario['nivel'])) ? getRotaPo
             if (data.authenticated) {
                 window.location.href = <?= json_encode($__rota_dashboard) ?>;
             } else {
-                window.location.href = '/projetos/dashboard/';
+                window.location.href = '<?= getBasePath() ?>/';
             }
         })
         .catch(error => {
             console.error('Erro ao obter rota:', error);
-            window.location.href = '/projetos/dashboard/';
+            window.location.href = '<?= getBasePath() ?>/';
         });
     }
     
     <?php if ($mostrarBotaoVoltar): ?>
     // Inicializar botão de voltar
     function initBackButton() {
-        import('/projetos/dashboard/public/js/funcoes.js')
+        import('<?= getBasePath() ?>/public/js/funcoes.js')
             .then(module => {
                 module.initBackButtons();
             })
