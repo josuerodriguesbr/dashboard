@@ -1,6 +1,6 @@
 // Módulo de utilitários genéricos
 export function formatCPF(value) {
-  const digits = String(value).replace(/\D/g, '').slice(0,11);
+  const digits = String(value).replace(/\D/g, '').slice(0, 11);
   let v = digits;
   v = v.replace(/(\d{3})(\d)/, '$1.$2');
   v = v.replace(/(\d{3})(\d)/, '$1.$2');
@@ -31,7 +31,7 @@ export function mostrarNotificacao(mensagem, tipo = 'info', duracao = 5000) {
   `;
 
   // Adicionar evento para fechar a notificação ao clicar nela
-  notificacao.addEventListener('click', function(e) {
+  notificacao.addEventListener('click', function (e) {
     if (e.target.classList.contains('feedback-fechar') || e.target.classList.contains('feedback-conteudo') || e.target === notificacao) {
       fecharNotificacao(notificacao);
     }
@@ -150,7 +150,7 @@ export function goBack() {
   if (history.length > 1) {
     history.back();
   } else {
-    window.location.href = '/projetos/dashboard/';
+    window.location.href = (window.BASE_PATH || '') + '/';
   }
 }
 

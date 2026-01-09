@@ -24,6 +24,10 @@
         <link rel="stylesheet" href="<?= getBasePath() ?>/public/css/style.css" />
     <?php endif; ?>
 
+    <script>
+        window.BASE_PATH = "<?= getBasePath() ?>";
+    </script>
+
 </head>
 <body>
     <div class="container-pagina">

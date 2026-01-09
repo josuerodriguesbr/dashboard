@@ -128,6 +128,10 @@ $__rota_dashboard = (is_array($usuario) && isset($usuario['nivel'])) ? getRotaPo
 ?>
 
 <script>
+    window.BASE_PATH = "<?= getBasePath() ?>";
+</script>
+
+<script>
     // Função para exibir notificações
     function mostrarNotificacao(mensagem, tipo = 'info', duracao = 5000) {
         // Certificar-se de que o container existe
