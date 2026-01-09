@@ -53,7 +53,7 @@
         
         gerarConviteBtn.addEventListener('click', async function() {
             try {
-                const response = await fetch('/projetos/dashboard/gerar-link-convite', {
+                const response = await fetch((window.BASE_PATH || '') + '/gerar-link-convite', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -65,7 +65,7 @@
                 if (data.success) {
                     // Modificar o link para incluir o tipo de usuário
                     const tipoConvite = document.getElementById('tipo-convite').value;
-                    const linkCompleto = `http://${window.location.host}/projetos/dashboard/cadastro-via-convite?hash=${data.hash}&tipo=${tipoConvite}`;
+                    const linkCompleto = `${window.location.origin}${window.BASE_PATH || ''}/cadastro-via-convite?hash=${data.hash}&tipo=${tipoConvite}`;
                     
                     linkConviteInput.value = linkCompleto;
                     linkConviteContainer.classList.remove('oculta');
@@ -73,11 +73,11 @@
                     // Atualizar o link de cadastro no backend para criar o perfil correto
                     // Isso seria feito no backend quando o usuário for cadastrado via convite
                 } else {
-                    alert('Erro ao gerar link de convite: ' + data.message);
+                    mostrarNotificacao('Erro ao gerar link de convite: ' + data.message, 'erro');
                 }
             } catch (error) {
                 console.error('Erro:', error);
-                alert('Erro ao gerar link de convite');
+                mostrarNotificacao('Erro ao gerar link de convite', 'erro');
             }
         });
         

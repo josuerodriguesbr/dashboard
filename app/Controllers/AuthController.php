@@ -216,7 +216,7 @@ class AuthController
             $perfil = Usuario::getPerfilAtivo($usuario['id']);
             
             if ($perfil && !empty($perfil['hashConvite'])) {
-                $link = BASE_URL . '/cadastro-via-convite?hash=' . $perfil['hashConvite'];
+                $link = getBaseUrl() . '/cadastro-via-convite?hash=' . $perfil['hashConvite'];
                 json_response(['success' => true, 'link' => $link, 'hash' => $perfil['hashConvite']]);
             } else {
                 json_response(['success' => false, 'message' => 'Perfil não possui hash de convite.']);

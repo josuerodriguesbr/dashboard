@@ -95,7 +95,7 @@
                         <span class="user-name">
                             <?= htmlspecialchars($usuario['nome'] ?? $usuario['name'] ?? 'Usuário') ?>
                         </span>
-                        <a href="/projetos/dashboard/perfil" class="profile-link" title="Meu Perfil">
+                        <a href="<?= getBasePath() ?>/perfil" class="profile-link" title="Meu Perfil">
                             👤
                         </a>
                     </div>
