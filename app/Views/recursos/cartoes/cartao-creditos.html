@@ -23,7 +23,7 @@
     async function carregarSaldoCreditos() {
         console.log('Tentando carregar saldo de créditos...');
         try {
-            const response = await fetch('/projetos/dashboard/creditos/saldo', {
+            const response = await fetch((window.BASE_PATH || '') + '/creditos/saldo', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -55,7 +55,7 @@
 
     // Função para abrir a tela de créditos
     function abrirTelaCreditos() {
-        window.location.href = '/projetos/dashboard/creditos';
+        window.location.href = (window.BASE_PATH || '') + '/creditos';
     }
 
 

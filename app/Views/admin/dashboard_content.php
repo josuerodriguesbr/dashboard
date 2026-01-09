@@ -10,7 +10,7 @@
             </div>
             <div class="card-body">
                 <p class="mb-4">Gerencie os saldos dos usuários e veja o histórico.</p>
-                <a href="/projetos/dashboard/admin/gerenciar-creditos" class="btn btn-primary w-full text-center">
+                <a href="<?= getBasePath() ?>/admin/gerenciar-creditos" class="btn btn-primary w-full text-center">
                     Gerenciar Créditos
                 </a>
             </div>

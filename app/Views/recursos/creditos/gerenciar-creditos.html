@@ -31,12 +31,14 @@
 
                     <div class="campoDeTexto">
                         <label for="valor-transferencia">Valor</label>
-                        <input type="number" id="valor-transferencia" name="valor" step="0.01" min="0.01" placeholder="0.00" required>
+                        <input type="number" id="valor-transferencia" name="valor" step="0.01" min="0.01"
+                            placeholder="0.00" required>
                     </div>
 
                     <div class="campoDeTexto">
                         <label for="descricao-transferencia">Descrição (Opcional)</label>
-                        <input type="text" id="descricao-transferencia" name="descricao" placeholder="Descrição da transferência">
+                        <input type="text" id="descricao-transferencia" name="descricao"
+                            placeholder="Descrição da transferência">
                     </div>
 
                     <button type="submit" class="btn-primary">Transferir Créditos</button>
@@ -62,7 +64,7 @@
     // Função para carregar o saldo
     async function carregarSaldo() {
         try {
-            const response = await fetch('/projetos/dashboard/creditos/saldo', {
+            const response = await fetch((window.BASE_PATH || '') + '/creditos/saldo', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -91,7 +93,7 @@
     // Função para carregar perfis para transferência
     async function carregarPerfisParaTransferencia() {
         try {
-            const response = await fetch('/projetos/dashboard/creditos/perfis-transferencia', {
+            const response = await fetch((window.BASE_PATH || '') + '/creditos/perfis-transferencia', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -104,7 +106,7 @@
                 if (data.success) {
                     const select = document.getElementById('destino-perfil');
                     select.innerHTML = '<option value="">Selecione um perfil</option>';
-                    
+
                     data.perfis.forEach(perfil => {
                         const option = document.createElement('option');
                         option.value = perfil.id;
@@ -128,7 +130,7 @@
     // Função para carregar histórico de transações
     async function carregarHistoricoTransacoes() {
         try {
-            const response = await fetch('/projetos/dashboard/creditos/historico', {
+            const response = await fetch((window.BASE_PATH || '') + '/creditos/historico', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -157,27 +159,27 @@
     // Função para exibir o histórico de transações
     function exibirHistoricoTransacoes(transacoes) {
         const container = document.getElementById('historico-transacoes');
-        
+
         if (transacoes.length === 0) {
             container.innerHTML = '<p>Nenhuma transação encontrada.</p>';
             return;
         }
 
         let html = '<div class="historico-grid">';
-        
+
         transacoes.forEach(transacao => {
-            const tipoClasse = transacao.tipo === 'entrada' ? 'historico-entrada' : 
-                              transacao.tipo === 'saida' ? 'historico-saida' : 'historico-transferencia';
-            
-            const tipoTexto = transacao.tipo === 'entrada' ? 'Entrada' : 
-                             transacao.tipo === 'saida' ? 'Saída' : 'Transferência';
-            
+            const tipoClasse = transacao.tipo === 'entrada' ? 'historico-entrada' :
+                transacao.tipo === 'saida' ? 'historico-saida' : 'historico-transferencia';
+
+            const tipoTexto = transacao.tipo === 'entrada' ? 'Entrada' :
+                transacao.tipo === 'saida' ? 'Saída' : 'Transferência';
+
             let descricao = `R$ ${parseFloat(transacao.valor).toFixed(2)}`;
-            
+
             if (transacao.descricao) {
                 descricao += ` - ${transacao.descricao}`;
             }
-            
+
             if (transacao.tipo === 'transferencia') {
                 if (transacao.origem_perfil_id === window.usuario.id) {
                     descricao += ` para ${transacao.nome_destino || 'Destinatário'}`;
@@ -185,7 +187,7 @@
                     descricao += ` de ${transacao.nome_origem || 'Remetente'}`;
                 }
             }
-            
+
             html += `
                 <div class="historico-item ${tipoClasse}">
                     <div class="historico-tipo">${tipoTexto}</div>
@@ -194,7 +196,7 @@
                 </div>
             `;
         });
-        
+
         html += '</div>';
         container.innerHTML = html;
     }
@@ -202,13 +204,13 @@
     // Função para lidar com a transferência de créditos
     async function handleSubmitTransferencia(event) {
         event.preventDefault();
-        
+
         const formData = new FormData(event.target);
         const dados = Object.fromEntries(formData);
         dados.valor = parseFloat(dados.valor);
-        
+
         try {
-            const response = await fetch('/projetos/dashboard/creditos/transferir', {
+            const response = await fetch((window.BASE_PATH || '') + '/creditos/transferir', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -218,13 +220,13 @@
             });
 
             const result = await response.json();
-            
+
             if (result.success) {
                 mostrarNotificacao('Transferência realizada com sucesso!', 'sucesso');
-                
+
                 // Limpar o formulário
                 event.target.reset();
-                
+
                 // Atualizar saldo e histórico
                 setTimeout(() => {
                     carregarSaldo();
@@ -242,11 +244,11 @@
     // Função para obter o token de autenticação
 
     // Inicializar a página
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         carregarSaldo();
         carregarPerfisParaTransferencia();
         carregarHistoricoTransacoes();
-        
+
         const form = document.getElementById('form-transferencia');
         if (form) {
             form.addEventListener('submit', handleSubmitTransferencia);
