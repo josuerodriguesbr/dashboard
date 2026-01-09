@@ -198,12 +198,13 @@ $router->get('/corrigir-admin', function () {
 $path = $_SERVER['REQUEST_URI'] ?? '/';
 
 // Remover o prefixo do subdiretório para obter o caminho real
-$subdir = '/projetos/dashboard';
-if (strpos($path, $subdir) === 0) {
+$subdir = getBasePath();
+if (!empty($subdir) && strpos($path, $subdir) === 0) {
     $path = substr($path, strlen($subdir));
-    if (empty($path)) {
-        $path = '/';
-    }
+}
+
+if (empty($path)) {
+    $path = '/';
 }
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
