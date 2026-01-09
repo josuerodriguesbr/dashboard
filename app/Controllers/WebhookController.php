@@ -72,19 +72,16 @@ class WebhookController
 
             // 5. Adicionar Créditos
             // Tipo 1 = Compra (Multiplicador 1)
+            // OBS: O método adicionarTransacao/Criar JÁ atualiza o saldo da carteira automaticamente.
             \App\Models\Usuario::adicionarTransacao(
                 $usuarioId,
                 1,
                 $valor, // Valor positivo
                 "Recarga via Pix (Asaas: $pagamentoIdExterno)"
             );
-
-            // Tentar atualizar carteira (o método adicionarTransacao só cria o histórico, precisamos atualizar o saldo em carteira)
-            // Ah, o adicionarTransacao do Model provavelmente não atualiza a carteira automaticamente? 
-            // Verificando CreditoTransacao::criar... vamos assumir que não e chamar o updateSaldo.
             
-            $carteiraModel = new \App\Models\Carteira($pdo);
-            $carteiraModel->updateSaldo($usuarioId, $valor);
+            // Log::registrar was here, keeping it clean below
+
 
             Log::registrar($usuarioId, 'Recarga Webhook', "Créditos adicionados: $valor (Ref: $pagamentoIdExterno)");
 
