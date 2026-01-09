@@ -5,7 +5,7 @@ use PDO;
 
 class ItemAdquirido {
     protected $pdo;
-    protected $table = 'integra_itens_adquiridos';
+    protected $table = 'itens_adquiridos';
 
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;
@@ -24,7 +24,7 @@ class ItemAdquirido {
         $stmt = $this->pdo->prepare("
             SELECT i.*, r.nome as recurso_nome 
             FROM {$this->table} i
-            JOIN integra_recursos r ON i.recurso_id = r.id
+            JOIN recursos r ON i.recurso_id = r.id
             WHERE i.usuario_id = ?
             ORDER BY i.createdAt DESC
         ");

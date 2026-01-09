@@ -29,10 +29,10 @@ class CreditoTransacao
             // Mas dependendo da regra, o model de Carteira soma o que vier.
             
             // SE a lógica anterior usava multiplicador do TIPO, precisamos manter isso?
-            // O novo schema tem `integra_cred_trans_tipos.multiplicador`.
+            // O novo schema tem `cred_trans_tipos.multiplicador`.
             // Vamos buscar o multiplicador para garantir.
             
-            $stmtTipo = $pdo->prepare("SELECT multiplicador FROM integra_cred_trans_tipos WHERE id = ?");
+            $stmtTipo = $pdo->prepare("SELECT multiplicador FROM cred_trans_tipos WHERE id = ?");
             $stmtTipo->execute([$tipoId]);
             $tipo = $stmtTipo->fetch(PDO::FETCH_ASSOC);
             $multiplicador = $tipo ? $tipo['multiplicador'] : 1;
@@ -47,7 +47,7 @@ class CreditoTransacao
             
             // 2. Registrar Transação
             $stmt = $pdo->prepare("
-                INSERT INTO integra_credito_transacoes 
+                INSERT INTO credito_transacoes 
                 (usuario_id, tipo_id, valor_nominal, saldo_apos, descricao, recarga_id, createdAt) 
                 VALUES (?, ?, ?, ?, ?, ?, NOW())
             ");
@@ -78,8 +78,8 @@ class CreditoTransacao
         
         $stmt = $pdo->prepare("
             SELECT t.*, tp.nome as tipo_nome, tp.multiplicador
-            FROM integra_credito_transacoes t
-            JOIN integra_cred_trans_tipos tp ON t.tipo_id = tp.id
+            FROM credito_transacoes t
+            JOIN cred_trans_tipos tp ON t.tipo_id = tp.id
             WHERE t.usuario_id = ?
             ORDER BY t.createdAt DESC
             LIMIT ?

@@ -5,7 +5,7 @@ use PDO;
 
 class Carteira {
     protected $pdo;
-    protected $table = 'integra_carteira';
+    protected $table = 'carteira';
 
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;

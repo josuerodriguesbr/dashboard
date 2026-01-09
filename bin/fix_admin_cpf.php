@@ -12,13 +12,13 @@ try {
     $email = 'admin@sistema.com';
 
     // Primeiro, vamos ver se o usuário existe
-    $stmt = $pdo->prepare("SELECT id, nome, cpf FROM integra_usuarios WHERE email = ?");
+    $stmt = $pdo->prepare("SELECT id, nome, cpf FROM usuarios WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
         // Atualiza
-        $update = $pdo->prepare("UPDATE integra_usuarios SET cpf = ? WHERE id = ?");
+        $update = $pdo->prepare("UPDATE usuarios SET cpf = ? WHERE id = ?");
         $update->execute([$novoCpfAdmin, $user['id']]);
         echo "Sucesso: CPF do Administrador ({$user['nome']}) atualizado para {$novoCpfAdmin}.\n";
     } else {

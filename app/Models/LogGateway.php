@@ -5,7 +5,7 @@ use PDO;
 
 class LogGateway {
     protected $pdo;
-    protected $table = 'integra_logs_gateway';
+    protected $table = 'logs_gateway';
 
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;

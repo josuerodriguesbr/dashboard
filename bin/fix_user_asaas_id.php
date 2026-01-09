@@ -14,7 +14,7 @@ try {
     echo "De Asaas ID antigo -> Para: {$novoAsaasId}\n";
     echo "CPF Base: {$cpfCorreto}\n";
 
-    $stmt = $pdo->prepare("UPDATE integra_usuarios SET asaas_id = ?, cpf = ? WHERE email = ?");
+    $stmt = $pdo->prepare("UPDATE usuarios SET asaas_id = ?, cpf = ? WHERE email = ?");
     $stmt->execute([$novoAsaasId, $cpfCorreto, $email]); // Salvando CPF sem formatação tb para garantir
 
     echo "Sucesso! Registros afetados: " . $stmt->rowCount() . "\n";

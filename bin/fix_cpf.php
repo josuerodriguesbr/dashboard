@@ -10,7 +10,7 @@ try {
     $novoCpf = '52998224097'; 
     $email = 'carlos@gmail.com';
 
-    $stmt = $pdo->prepare("UPDATE integra_usuarios SET cpf = ? WHERE email = ?");
+    $stmt = $pdo->prepare("UPDATE usuarios SET cpf = ? WHERE email = ?");
     $stmt->execute([$novoCpf, $email]);
 
     if ($stmt->rowCount() > 0) {

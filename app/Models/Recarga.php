@@ -5,7 +5,7 @@ use PDO;
 
 class Recarga {
     protected $pdo;
-    protected $table = 'integra_recargas';
+    protected $table = 'recargas';
 
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;

@@ -14,9 +14,9 @@ class Usuario
             // Updated query to include profile status info
             $stmt = $pdo->prepare("
                 SELECT u.*, p.status as perfil_status, pa.nivel as papel_nivel
-                FROM integra_usuarios u
-                LEFT JOIN integra_perfis p ON u.idPerfilAtivo = p.id
-                LEFT JOIN integra_papeis pa ON p.id_papel = pa.id
+                FROM usuarios u
+                LEFT JOIN perfis p ON u.idPerfilAtivo = p.id
+                LEFT JOIN papeis pa ON p.id_papel = pa.id
                 ORDER BY u.id DESC
                 LIMIT ?
             ");
@@ -35,9 +35,9 @@ class Usuario
             // Updated query to fetch profile info
             $stmt = $pdo->prepare("
                 SELECT u.*, p.status as perfil_status, p.hashConvite, p.hashAnfitriao, pa.nivel as papel_nivel
-                FROM integra_usuarios u
-                LEFT JOIN integra_perfis p ON u.idPerfilAtivo = p.id
-                LEFT JOIN integra_papeis pa ON p.id_papel = pa.id
+                FROM usuarios u
+                LEFT JOIN perfis p ON u.idPerfilAtivo = p.id
+                LEFT JOIN papeis pa ON p.id_papel = pa.id
                 WHERE u.id = ?
             ");
             $stmt->execute([$id]);
@@ -67,7 +67,7 @@ class Usuario
     {
         $pdo = Database::getConnection();
         try {
-            $stmt = $pdo->prepare("SELECT * FROM integra_usuarios WHERE email = ?");
+            $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = ?");
             $stmt->execute([$email]);
             return $stmt->fetch();
         } catch (\Exception $e) {
@@ -101,7 +101,7 @@ class Usuario
             $senha_hashed = password_hash($senha, PASSWORD_DEFAULT);
 
             $stmt = $pdo->prepare("
-                INSERT INTO integra_usuarios (nome, email, senha, cpf, telefone, parent_id)
+                INSERT INTO usuarios (nome, email, senha, cpf, telefone, parent_id)
                 VALUES (?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([$nome, $email, $senha_hashed, $cpf, $telefone, $parentId]);
@@ -158,7 +158,7 @@ class Usuario
             
             $valores[] = $id;
             
-            $sql = "UPDATE integra_usuarios SET " . implode(', ', $sets) . " WHERE id = ?";
+            $sql = "UPDATE usuarios SET " . implode(', ', $sets) . " WHERE id = ?";
             $stmt = $pdo->prepare($sql);
             return $stmt->execute($valores);
             
@@ -172,7 +172,7 @@ class Usuario
     {
         $pdo = Database::getConnection();
         try {
-            $stmt = $pdo->prepare("DELETE FROM integra_usuarios WHERE id = ?");
+            $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = ?");
             return $stmt->execute([$id]);
         } catch (\Exception $e) {
             error_log("Usuario::deletar falhou: " . $e->getMessage());
@@ -188,9 +188,9 @@ class Usuario
             // Updated login query to include role info
             $stmt = $pdo->prepare("
                 SELECT u.*, p.status as perfil_status, pa.nivel as papel_nivel
-                FROM integra_usuarios u
-                LEFT JOIN integra_perfis p ON u.idPerfilAtivo = p.id
-                LEFT JOIN integra_papeis pa ON p.id_papel = pa.id
+                FROM usuarios u
+                LEFT JOIN perfis p ON u.idPerfilAtivo = p.id
+                LEFT JOIN papeis pa ON p.id_papel = pa.id
                 WHERE u.email = ?
             ");
             $stmt->execute([$email]);
@@ -253,7 +253,7 @@ class Usuario
                  
                  // Buscar asaas_id fresco do banco
                  $pdo = Database::getConnection();
-                 $stmt = $pdo->prepare("SELECT asaas_id FROM integra_usuarios WHERE id = ?");
+                 $stmt = $pdo->prepare("SELECT asaas_id FROM usuarios WHERE id = ?");
                  $stmt->execute([$resultado['payload']['id']]);
                  $extra = $stmt->fetch();
                  if ($extra) {
@@ -295,7 +295,7 @@ class Usuario
     public static function atualizarAsaasId($usuarioId, $asaasId)
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("UPDATE integra_usuarios SET asaas_id = ? WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE usuarios SET asaas_id = ? WHERE id = ?");
         return $stmt->execute([$asaasId, $usuarioId]);
     }
     
@@ -307,9 +307,9 @@ class Usuario
         try {
             $stmt = $pdo->prepare("
                 SELECT p.*, pa.nivel as papel_nivel
-                FROM integra_perfis p
-                JOIN integra_papeis pa ON p.id_papel = pa.id
-                WHERE p.id = (SELECT idPerfilAtivo FROM integra_usuarios WHERE id = ?)
+                FROM perfis p
+                JOIN papeis pa ON p.id_papel = pa.id
+                WHERE p.id = (SELECT idPerfilAtivo FROM usuarios WHERE id = ?)
             ");
             $stmt->execute([$usuarioId]);
             return $stmt->fetch();
@@ -324,13 +324,13 @@ class Usuario
         $pdo = Database::getConnection();
         try {
             // Verify ownership
-            $stmt = $pdo->prepare("SELECT id FROM integra_perfis WHERE id = ? AND id_usuario = ?");
+            $stmt = $pdo->prepare("SELECT id FROM perfis WHERE id = ? AND id_usuario = ?");
             $stmt->execute([$perfilId, $usuarioId]);
             if (!$stmt->fetch()) {
                 throw new \Exception("Perfil não pertence ao usuário.");
             }
 
-            $stmt = $pdo->prepare("UPDATE integra_usuarios SET idPerfilAtivo = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE usuarios SET idPerfilAtivo = ? WHERE id = ?");
             return $stmt->execute([$perfilId, $usuarioId]);
         } catch (\Exception $e) {
             error_log("Usuario::definirPerfilAtivo falhou: " . $e->getMessage());

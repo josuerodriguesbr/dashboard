@@ -8,12 +8,12 @@ $pdo = Database::getConnection();
 
 try {
     // Verificar se o papel 'admin' existe, senão criar
-    $stmt = $pdo->query("SELECT id FROM integra_papeis WHERE nivel = 'admin'");
+    $stmt = $pdo->query("SELECT id FROM papeis WHERE nivel = 'admin'");
     $adminPapel = $stmt->fetch();
     
     if (!$adminPapel) {
         echo "Criando papel 'admin'...\n";
-        $stmt = $pdo->prepare("INSERT INTO integra_papeis (nivel, descricao) VALUES (?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO papeis (nivel, descricao) VALUES (?, ?)");
         $stmt->execute(['admin', 'Administrador do sistema']);
         $adminPapelId = $pdo->lastInsertId();
         echo "Papel 'admin' criado com ID: $adminPapelId\n";
@@ -23,12 +23,12 @@ try {
     }
     
     // Verificar se o papel 'assinante' existe, senão criar
-    $stmt = $pdo->query("SELECT id FROM integra_papeis WHERE nivel = 'assinante'");
+    $stmt = $pdo->query("SELECT id FROM papeis WHERE nivel = 'assinante'");
     $assinantePapel = $stmt->fetch();
     
     if (!$assinantePapel) {
         echo "Criando papel 'assinante'...\n";
-        $stmt = $pdo->prepare("INSERT INTO integra_papeis (nivel, descricao) VALUES (?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO papeis (nivel, descricao) VALUES (?, ?)");
         $stmt->execute(['assinante', 'Assinante do sistema']);
         $assinantePapelId = $pdo->lastInsertId();
         echo "Papel 'assinante' criado com ID: $assinantePapelId\n";
@@ -38,12 +38,12 @@ try {
     }
     
     // Verificar se o papel 'vendedor' existe, senão criar
-    $stmt = $pdo->query("SELECT id FROM integra_papeis WHERE nivel = 'vendedor'");
+    $stmt = $pdo->query("SELECT id FROM papeis WHERE nivel = 'vendedor'");
     $vendedorPapel = $stmt->fetch();
     
     if (!$vendedorPapel) {
         echo "Criando papel 'vendedor'...\n";
-        $stmt = $pdo->prepare("INSERT INTO integra_papeis (nivel, descricao) VALUES (?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO papeis (nivel, descricao) VALUES (?, ?)");
         $stmt->execute(['vendedor', 'Vendedor do sistema']);
         $vendedorPapelId = $pdo->lastInsertId();
         echo "Papel 'vendedor' criado com ID: $vendedorPapelId\n";
@@ -53,12 +53,12 @@ try {
     }
     
     // Verificar se o papel 'operador' existe, senão criar
-    $stmt = $pdo->query("SELECT id FROM integra_papeis WHERE nivel = 'operador'");
+    $stmt = $pdo->query("SELECT id FROM papeis WHERE nivel = 'operador'");
     $operadorPapel = $stmt->fetch();
     
     if (!$operadorPapel) {
         echo "Criando papel 'operador'...\n";
-        $stmt = $pdo->prepare("INSERT INTO integra_papeis (nivel, descricao) VALUES (?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO papeis (nivel, descricao) VALUES (?, ?)");
         $stmt->execute(['operador', 'Operador do sistema']);
         $operadorPapelId = $pdo->lastInsertId();
         echo "Papel 'operador' criado com ID: $operadorPapelId\n";
@@ -68,12 +68,12 @@ try {
     }
     
     // Verificar se o papel 'cliente' existe, senão criar
-    $stmt = $pdo->query("SELECT id FROM integra_papeis WHERE nivel = 'cliente'");
+    $stmt = $pdo->query("SELECT id FROM papeis WHERE nivel = 'cliente'");
     $clientePapel = $stmt->fetch();
     
     if (!$clientePapel) {
         echo "Criando papel 'cliente'...\n";
-        $stmt = $pdo->prepare("INSERT INTO integra_papeis (nivel, descricao) VALUES (?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO papeis (nivel, descricao) VALUES (?, ?)");
         $stmt->execute(['cliente', 'Cliente do sistema']);
         $clientePapelId = $pdo->lastInsertId();
         echo "Papel 'cliente' criado com ID: $clientePapelId\n";
@@ -85,8 +85,8 @@ try {
     // Verificar e corrigir usuários que não têm perfil ativo
     $stmt = $pdo->query("
         SELECT u.id, u.nome, u.email, u.idPerfilAtivo
-        FROM integra_usuarios u
-        LEFT JOIN integra_perfis p ON u.id = p.id_usuario
+        FROM usuarios u
+        LEFT JOIN perfis p ON u.id = p.id_usuario
         WHERE u.idPerfilAtivo IS NULL OR u.idPerfilAtivo = 0
         GROUP BY u.id
     ");
@@ -97,7 +97,7 @@ try {
         echo "Corrigindo usuário: {$usuario['nome']} ({$usuario['email']})\n";
         
         // Verificar se o usuário já tem algum perfil criado
-        $stmtPerfil = $pdo->prepare("SELECT id, id_papel FROM integra_perfis WHERE id_usuario = ?");
+        $stmtPerfil = $pdo->prepare("SELECT id, id_papel FROM perfis WHERE id_usuario = ?");
         $stmtPerfil->execute([$usuario['id']]);
         $perfilExistente = $stmtPerfil->fetch();
         
@@ -123,7 +123,7 @@ try {
             
             // Criar perfil para o usuário
             $stmtCriarPerfil = $pdo->prepare("
-                INSERT INTO integra_perfis (id_papel, id_usuario, creditos, hashConvite, hashAnfitriao, status)
+                INSERT INTO perfis (id_papel, id_usuario, creditos, hashConvite, hashAnfitriao, status)
                 VALUES (?, ?, 0.00, ?, NULL, 'Ativo')
             ");
             $stmtCriarPerfil->execute([$papelId, $usuario['id'], $hashConvite]);
@@ -133,7 +133,7 @@ try {
         }
         
         // Atualizar o idPerfilAtivo do usuário
-        $stmtAtualizar = $pdo->prepare("UPDATE integra_usuarios SET idPerfilAtivo = ? WHERE id = ?");
+        $stmtAtualizar = $pdo->prepare("UPDATE usuarios SET idPerfilAtivo = ? WHERE id = ?");
         $stmtAtualizar->execute([$perfilId, $usuario['id']]);
         
         echo "  Definido perfil ativo (ID: $perfilId) para o usuário (ID: {$usuario['id']})\n";
@@ -144,9 +144,9 @@ try {
     // Verificar o usuário admin específico
     $stmt = $pdo->query("
         SELECT u.id, u.nome, u.email, u.idPerfilAtivo, p.id as perfil_id, pa.nivel as papel_nivel
-        FROM integra_usuarios u
-        LEFT JOIN integra_perfis p ON u.idPerfilAtivo = p.id
-        LEFT JOIN integra_papeis pa ON p.id_papel = pa.id
+        FROM usuarios u
+        LEFT JOIN perfis p ON u.idPerfilAtivo = p.id
+        LEFT JOIN papeis pa ON p.id_papel = pa.id
         WHERE u.email = 'admin@sistema.com'
     ");
     

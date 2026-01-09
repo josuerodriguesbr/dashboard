@@ -8,7 +8,7 @@ try {
     $email = 'admin@sistema.com';
 
     // Limpar asaas_id para forçar recriação do cliente no Asaas com os dados novos (CPF)
-    $stmt = $pdo->prepare("UPDATE integra_usuarios SET asaas_id = NULL WHERE email = ?");
+    $stmt = $pdo->prepare("UPDATE usuarios SET asaas_id = NULL WHERE email = ?");
     $stmt->execute([$email]);
 
     if ($stmt->rowCount() > 0) {

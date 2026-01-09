@@ -9,8 +9,8 @@ class Log
         try {
             $stmt = $pdo->prepare("
                 SELECT l.*, u.nome AS nomeUsuario 
-                FROM integra_logs l
-                LEFT JOIN integra_usuarios u ON u.id = l.usuarioId
+                FROM logs l
+                LEFT JOIN usuarios u ON u.id = l.usuarioId
                 ORDER BY l.createdAt DESC
                 LIMIT ?
             ");
@@ -29,7 +29,7 @@ class Log
             $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Sem agente';
 
             $stmt = $pdo->prepare("
-                INSERT INTO integra_logs (usuarioId, acao, detalhes, ip, userAgent)
+                INSERT INTO logs (usuarioId, acao, detalhes, ip, userAgent)
                 VALUES (?, ?, ?, ?, ?)
             ");
             return $stmt->execute([$usuarioId, $acao, $detalhes, $ip, $userAgent]);

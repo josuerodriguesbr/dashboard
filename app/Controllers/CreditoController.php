@@ -182,7 +182,7 @@ class CreditoController
                 }
             }
 
-            // Buscar saldo direto da tabela integra_perfis (já vem no perfil ativo)
+            // Buscar saldo direto da tabela perfis (já vem no perfil ativo)
             $saldo = $perfilAtivo['creditos'] ?? 0.00;
 
             if ($response !== null) {
@@ -359,9 +359,9 @@ class CreditoController
 
             $stmt = $pdo->prepare("
                 SELECT p.id, p.creditos, u.nome, u.email, pa.nivel as papel_nivel
-                FROM integra_perfis p
-                JOIN integra_usuarios u ON p.id_usuario = u.id
-                JOIN integra_papeis pa ON p.id_papel = pa.id
+                FROM perfis p
+                JOIN usuarios u ON p.id_usuario = u.id
+                JOIN papeis pa ON p.id_papel = pa.id
                 WHERE p.id IN ($perfisIdsStr)
                 ORDER BY pa.nivel, u.nome
             ");

@@ -37,9 +37,9 @@ class UsuarioController
 
             $stmt = $pdo->prepare("
                 SELECT p.id, u.nome, u.email, pa.nivel as papel_nivel
-                FROM integra_perfis p
-                JOIN integra_usuarios u ON p.id_usuario = u.id
-                JOIN integra_papeis pa ON p.id_papel = pa.id
+                FROM perfis p
+                JOIN usuarios u ON p.id_usuario = u.id
+                JOIN papeis pa ON p.id_papel = pa.id
                 WHERE p.id IN ($perfisIdsStr) AND pa.nivel = 'vendedor'
                 ORDER BY u.nome
             ");

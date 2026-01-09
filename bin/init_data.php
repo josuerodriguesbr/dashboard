@@ -17,7 +17,7 @@ try {
     ];
     
     foreach ($papeis as $papel) {
-        $stmt = $pdo->prepare("INSERT IGNORE INTO integra_papeis (nivel, descricao) VALUES (?, ?)");
+        $stmt = $pdo->prepare("INSERT IGNORE INTO papeis (nivel, descricao) VALUES (?, ?)");
         $stmt->execute($papel);
     }
     
@@ -33,12 +33,12 @@ try {
     ];
 
     foreach ($tiposTransacao as $tipo) {
-        $stmt = $pdo->prepare("INSERT IGNORE INTO integra_cred_trans_tipos (id, nome, multiplicador) VALUES (?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT IGNORE INTO cred_trans_tipos (id, nome, multiplicador) VALUES (?, ?, ?)");
         $stmt->execute($tipo);
     }
     
     // 3. Verificar/Criar Admin
-    $stmt = $pdo->prepare("SELECT id FROM integra_usuarios WHERE email = ?");
+    $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ?");
     $stmt->execute(['admin@sistema.com']);
     $usuario = $stmt->fetch();
     
@@ -47,7 +47,7 @@ try {
     if (!$usuario) {
         echo "Inserindo usuário administrador...\n";
         $senhaHash = password_hash('admin123', PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("INSERT INTO integra_usuarios (nome, email, senha, cpf, telefone, parent_id) VALUES (?, ?, ?, ?, ?, NULL)");
+        $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, senha, cpf, telefone, parent_id) VALUES (?, ?, ?, ?, ?, NULL)");
         $stmt->execute(['Administrador', 'admin@sistema.com', $senhaHash, '000.000.000-00', '(11) 99999-9999']);
         $usuarioId = $pdo->lastInsertId();
         
@@ -70,7 +70,7 @@ try {
         $papelAdmin = \App\Models\Papel::buscarPorNivel('admin');
         if ($papelAdmin) {
             // Verifica se ja tem perfil
-            $stmt = $pdo->prepare("SELECT id FROM integra_perfis WHERE id_usuario = ? AND id_papel = ?");
+            $stmt = $pdo->prepare("SELECT id FROM perfis WHERE id_usuario = ? AND id_papel = ?");
             $stmt->execute([$usuarioId, $papelAdmin['id']]);
             $perfil = $stmt->fetch();
             

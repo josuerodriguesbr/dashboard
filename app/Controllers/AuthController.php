@@ -111,7 +111,7 @@ class AuthController
             // 1. Validar convite (Busca Perfil Anfitrião)
             $perfilAnfitriao = null;
             if ($hashConvite) {
-                $stmt = $pdo->prepare("SELECT * FROM integra_perfis WHERE hashConvite = ?");
+                $stmt = $pdo->prepare("SELECT * FROM perfis WHERE hashConvite = ?");
                 $stmt->execute([$hashConvite]);
                 $perfilAnfitriao = $stmt->fetch();
                 
@@ -185,8 +185,8 @@ class AuthController
                 // Buscar perfil do anfitrião pelo hash
                 $stmt = $pdo->prepare("
                     SELECT u.nome 
-                    FROM integra_perfis p
-                    JOIN integra_usuarios u ON p.id_usuario = u.id
+                    FROM perfis p
+                    JOIN usuarios u ON p.id_usuario = u.id
                     WHERE p.hashConvite = ?
                 ");
                 $stmt->execute([$hash]);

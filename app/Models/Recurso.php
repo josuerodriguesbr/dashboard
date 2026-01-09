@@ -5,7 +5,7 @@ use PDO;
 
 class Recurso {
     protected $pdo;
-    protected $table = 'integra_recursos';
+    protected $table = 'recursos';
 
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;

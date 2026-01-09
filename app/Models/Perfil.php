@@ -16,8 +16,8 @@ class Perfil
         try {
             $stmt = $pdo->prepare("
                 SELECT p.*, pa.nivel as papel_nivel, pa.descricao as papel_descricao
-                FROM integra_perfis p
-                JOIN integra_papeis pa ON p.id_papel = pa.id
+                FROM perfis p
+                JOIN papeis pa ON p.id_papel = pa.id
                 WHERE p.id_usuario = ?
                 ORDER BY pa.id ASC
             ");
@@ -35,9 +35,9 @@ class Perfil
         try {
             $stmt = $pdo->prepare("
                 SELECT p.*, pa.nivel as papel_nivel, u.nome as usuario_nome, u.email as usuario_email
-                FROM integra_perfis p
-                JOIN integra_papeis pa ON p.id_papel = pa.id
-                JOIN integra_usuarios u ON p.id_usuario = u.id
+                FROM perfis p
+                JOIN papeis pa ON p.id_papel = pa.id
+                JOIN usuarios u ON p.id_usuario = u.id
                 WHERE p.id = ?
             ");
             $stmt->execute([$id]);
@@ -57,7 +57,7 @@ class Perfil
             }
 
             $stmt = $pdo->prepare("
-                INSERT INTO integra_perfis (id_usuario, id_papel, hashConvite, hashAnfitriao, status)
+                INSERT INTO perfis (id_usuario, id_papel, hashConvite, hashAnfitriao, status)
                 VALUES (?, ?, ?, ?, ?)
             ");
             $stmt->execute([$usuarioId, $papelId, $hashConvite, $hashAnfitriao, $status]);
@@ -98,7 +98,7 @@ class Perfil
         
         // Logica hierarquica poderia ser complexa (invites), mas aqui
         // vamos verificar se o Usuario "Pai" do dono do perfil alvo é o dono do perfil solicitante.
-        // Isso conecta a tabela integra_usuarios (parent_id) aos perfis.
+        // Isso conecta a tabela usuarios (parent_id) aos perfis.
         
         $usuarioAlvo = Usuario::buscarPorId($alvo['id_usuario']);
         if ($usuarioAlvo && $usuarioAlvo['parent_id'] == $solicitante['id_usuario']) {

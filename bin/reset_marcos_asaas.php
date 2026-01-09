@@ -8,7 +8,7 @@ try {
     $email = 'marcoslima@gmail.com';
     echo "Limpando Asaas ID do usuário {$email}...\n";
 
-    $stmt = $pdo->prepare("UPDATE integra_usuarios SET asaas_id = NULL WHERE email = ?");
+    $stmt = $pdo->prepare("UPDATE usuarios SET asaas_id = NULL WHERE email = ?");
     $stmt->execute([$email]);
 
     echo "Sucesso! O sistema gerará um ID novo na próxima tentativa.\n";

@@ -17,7 +17,7 @@ try {
     // 1. Buscar usuário Carlos
     echo "1. Buscando usuário Carlos...\n";
     $email = 'carlos@gmail.com';
-    $stmt = $pdo->prepare("SELECT * FROM integra_usuarios WHERE email = ?");
+    $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = ?");
     $stmt->execute([$email]);
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 

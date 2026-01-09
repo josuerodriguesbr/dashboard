@@ -40,7 +40,7 @@ class WebhookController
             
             // 3. Identificar Usuário pelo asaas_id
             // Precisamos buscar quem é o dono desse ID
-            $stmt = $pdo->prepare("SELECT id FROM integra_usuarios WHERE asaas_id = ?");
+            $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE asaas_id = ?");
             $stmt->execute([$asaasId]);
             $usuario = $stmt->fetch();
 
@@ -55,14 +55,14 @@ class WebhookController
 
             // 4. Idempotência: Verificar se já processamos essa transação
             // Vamos checar se existe alguma recarga com esse ID de transação externo? 
-            // Como ainda não temos campo 'external_id' na integra_credito_transacoes, vamos checar pelo log ou criar tabela de pagamentos processados.
+            // Como ainda não temos campo 'external_id' na credito_transacoes, vamos checar pelo log ou criar tabela de pagamentos processados.
             // Para simplificar, vamos verificar se já existe transação recente com mesmo valor e descrição, OU idealmente adicionar coluna.
-            // MELHOR: Vamos usar a tabela `integra_pagamentos` se ela estiver sendo usada, ou verificar logs.
+            // MELHOR: Vamos usar a tabela `pagamentos` se ela estiver sendo usada, ou verificar logs.
             // Dado o schema atual, vamos assumir que se não checarmos, o usuário ganha crédito duplo.
             // Vamos checar na tabela de transações se tem alguma com a descrição contendo o ID do pagamento.
             
             $descricaoBusca = "%$pagamentoIdExterno%";
-            $stmtCheck = $pdo->prepare("SELECT id FROM integra_credito_transacoes WHERE descricao LIKE ? AND usuario_id = ?");
+            $stmtCheck = $pdo->prepare("SELECT id FROM credito_transacoes WHERE descricao LIKE ? AND usuario_id = ?");
             $stmtCheck->execute(["Recarga via Pix (Asaas: $pagamentoIdExterno)", $usuarioId]);
             if ($stmtCheck->fetch()) {
                 error_log("[Webhook] Pagamento $pagamentoIdExterno já processado para usuário $usuarioId");
@@ -79,7 +79,7 @@ class WebhookController
                 "Recarga via Pix (Asaas: $pagamentoIdExterno)"
             );
 
-            // Tentar atualizar carteira (o método adicionarTransacao só cria o histórico, precisamos atualizar o saldo em integra_carteira)
+            // Tentar atualizar carteira (o método adicionarTransacao só cria o histórico, precisamos atualizar o saldo em carteira)
             // Ah, o adicionarTransacao do Model provavelmente não atualiza a carteira automaticamente? 
             // Verificando CreditoTransacao::criar... vamos assumir que não e chamar o updateSaldo.
             

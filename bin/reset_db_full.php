@@ -17,18 +17,24 @@ try {
     $stmt = $pdo->query("SHOW TABLES");
     $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    echo "Encontradas " . count($tables) . " tabelas para limpar.\n";
+    echo "Encontradas " . count($tables) . " tabelas para remover.\n";
 
     foreach ($tables as $table) {
-        echo "Limpando tabela: $table... ";
-        $pdo->exec("TRUNCATE TABLE `$table`");
+        echo "Removendo tabela: $table... ";
+        $pdo->exec("DROP TABLE IF EXISTS `$table`");
         echo "OK\n";
     }
 
     // Reativar verificação de chave estrangeira
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
 
-    echo "\n✅ Todas as tabelas foram limpas com sucesso.\n";
+    echo "\n✅ Todas as tabelas foram removidas.\n";
+    echo "\n🔄 Importando novo schema (vendasysDB.sql)...\n";
+    
+    $sql = file_get_contents(__DIR__ . '/vendasysDB.sql');
+    $pdo->exec($sql);
+    echo "✅ Schema importado com sucesso!\n";
+
     echo "\n🔄 Iniciando reinicialização dos dados padrão (init_data.php)...\n";
     echo "--------------------------------------------------------\n";
 

@@ -6,12 +6,12 @@ try {
     $pdo = \Config\Database::getConnection();
     
     // Check if column exists
-    $stmt = $pdo->query("SHOW COLUMNS FROM integra_usuarios LIKE 'asaas_id'");
+    $stmt = $pdo->query("SHOW COLUMNS FROM usuarios LIKE 'asaas_id'");
     $exists = $stmt->fetch();
     
     if (!$exists) {
         echo "Adicionando coluna asaas_id...\n";
-        $pdo->exec("ALTER TABLE integra_usuarios ADD COLUMN asaas_id VARCHAR(50) DEFAULT NULL AFTER telefone");
+        $pdo->exec("ALTER TABLE usuarios ADD COLUMN asaas_id VARCHAR(50) DEFAULT NULL AFTER telefone");
         echo "Coluna adicionada com sucesso!\n";
     } else {
         echo "Coluna asaas_id já existe.\n";

@@ -18,7 +18,7 @@ class Sessao
             $expiresAt = date('Y-m-d H:i:s', time() + ($expiresInHours * 3600));
             
             $stmt = $pdo->prepare("
-                INSERT INTO integra_sessoes (usuarioId, token, expiresAt, isActive)
+                INSERT INTO sessoes (usuarioId, token, expiresAt, isActive)
                 VALUES (?, ?, ?, 1)
             ");
             
@@ -40,8 +40,8 @@ class Sessao
             
             $stmt = $pdo->prepare("
                 SELECT s.*, u.nome as usuarioNome, u.email as usuarioEmail
-                FROM integra_sessoes s
-                JOIN integra_usuarios u ON s.usuarioId = u.id
+                FROM sessoes s
+                JOIN usuarios u ON s.usuarioId = u.id
                 WHERE s.token = ? AND s.isActive = 1 AND s.expiresAt > NOW()
             ");
             
@@ -61,7 +61,7 @@ class Sessao
         $pdo = self::getConnection();
         
         try {
-            $stmt = $pdo->prepare("UPDATE integra_sessoes SET isActive = 0 WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE sessoes SET isActive = 0 WHERE id = ?");
             return $stmt->execute([$tokenId]);
         } catch (\Exception $e) {
             error_log("Sessao::desativar falhou: " . $e->getMessage());
@@ -74,7 +74,7 @@ class Sessao
         $pdo = self::getConnection();
         
         try {
-            $stmt = $pdo->prepare("UPDATE integra_sessoes SET isActive = 0 WHERE token = ?");
+            $stmt = $pdo->prepare("UPDATE sessoes SET isActive = 0 WHERE token = ?");
             return $stmt->execute([$token]);
         } catch (\Exception $e) {
             error_log("Sessao::desativarPorToken falhou: " . $e->getMessage());

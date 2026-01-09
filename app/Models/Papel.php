@@ -9,7 +9,7 @@ class Papel
     {
         $pdo = Database::getConnection();
         try {
-            $stmt = $pdo->query("SELECT * FROM integra_papeis ORDER BY id ASC");
+            $stmt = $pdo->query("SELECT * FROM papeis ORDER BY id ASC");
             return $stmt->fetchAll();
         } catch (\Exception $e) {
             error_log("Papel::listar falhou: " . $e->getMessage());
@@ -21,7 +21,7 @@ class Papel
     {
         $pdo = Database::getConnection();
         try {
-            $stmt = $pdo->prepare("SELECT * FROM integra_papeis WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT * FROM papeis WHERE id = ?");
             $stmt->execute([$id]);
             return $stmt->fetch();
         } catch (\Exception $e) {
@@ -34,7 +34,7 @@ class Papel
     {
         $pdo = Database::getConnection();
         try {
-            $stmt = $pdo->prepare("SELECT * FROM integra_papeis WHERE nivel = ?");
+            $stmt = $pdo->prepare("SELECT * FROM papeis WHERE nivel = ?");
             $stmt->execute([$nivel]);
             return $stmt->fetch();
         } catch (\Exception $e) {

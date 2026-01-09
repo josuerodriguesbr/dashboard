@@ -12,7 +12,7 @@ try {
     echo "Conexão com banco de dados estabelecida.\n";
     
     // Encontrar o usuário administrador
-    $stmt = $pdo->prepare("SELECT id, nome, email FROM integra_usuarios WHERE email = 'admin@sistema.com'");
+    $stmt = $pdo->prepare("SELECT id, nome, email FROM usuarios WHERE email = 'admin@sistema.com'");
     $stmt->execute();
     $admin = $stmt->fetch();
     
@@ -27,8 +27,8 @@ try {
     // Verificar se já existe um perfil de admin para este usuário
     $stmt = $pdo->prepare("
         SELECT p.id, p.status, p.creditos, p.hashConvite, p.hashAnfitriao, pa.nivel
-        FROM integra_perfis p
-        JOIN integra_papeis pa ON p.id_papel = pa.id
+        FROM perfis p
+        JOIN papeis pa ON p.id_papel = pa.id
         WHERE p.id_usuario = ? AND pa.nivel = 'admin'
     ");
     $stmt->execute([$adminId]);
@@ -38,7 +38,7 @@ try {
         echo "Perfil de administrador já existe (ID: {$perfilAdmin['id']})\n";
         
         // Verificar se o idPerfilAtivo do usuário já está definido corretamente
-        $stmt = $pdo->prepare("SELECT idPerfilAtivo FROM integra_usuarios WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT idPerfilAtivo FROM usuarios WHERE id = ?");
         $stmt->execute([$adminId]);
         $usuario = $stmt->fetch();
         
@@ -46,7 +46,7 @@ try {
         
         if ($usuario['idPerfilAtivo'] != $perfilAdmin['id']) {
             // Atualizar o idPerfilAtivo do usuário
-            $stmt = $pdo->prepare("UPDATE integra_usuarios SET idPerfilAtivo = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE usuarios SET idPerfilAtivo = ? WHERE id = ?");
             $stmt->execute([$perfilAdmin['id'], $adminId]);
             echo "Perfil ativo do usuário atualizado para o perfil de admin (ID: {$perfilAdmin['id']})\n";
         } else {
@@ -56,7 +56,7 @@ try {
         echo "Criando perfil de administrador...\n";
         
         // Obter o ID do papel admin
-        $stmt = $pdo->prepare("SELECT id FROM integra_papeis WHERE nivel = ?");
+        $stmt = $pdo->prepare("SELECT id FROM papeis WHERE nivel = ?");
         $stmt->execute(['admin']);
         $papel = $stmt->fetch();
         
@@ -72,7 +72,7 @@ try {
         
         // Criar perfil admin com hashAnfitriao NULL (primeiro usuário)
         $stmt = $pdo->prepare("
-            INSERT INTO integra_perfis (id_papel, id_usuario, creditos, hashConvite, hashAnfitriao, status)
+            INSERT INTO perfis (id_papel, id_usuario, creditos, hashConvite, hashAnfitriao, status)
             VALUES (?, ?, ?, ?, ?, 'Ativo')
         ");
         $stmt->execute([$papel['id'], $adminId, 0.00, $hashConvite, NULL]);
@@ -81,7 +81,7 @@ try {
         echo "Perfil admin criado com ID: $perfilId\n";
         
         // Atualizar o idPerfilAtivo do usuário
-        $stmt = $pdo->prepare("UPDATE integra_usuarios SET idPerfilAtivo = ? WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE usuarios SET idPerfilAtivo = ? WHERE id = ?");
         $stmt->execute([$perfilId, $adminId]);
         
         echo "Perfil de administrador criado com sucesso (ID: $perfilId)\n";
