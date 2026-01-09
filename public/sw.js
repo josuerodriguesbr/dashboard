@@ -1,18 +1,36 @@
-// sw.js
 const CACHE_NAME = 'dashboard-v1';
 const urlsToCache = [
-  '/projetos/dashboard',
-  '/projetos/dashboard/public/css/style.css',
-  '/projetos/dashboard/public/js/tema.js'
+  // Apenas arquivos estáticos essenciais que temos certeza que existem
+  './css/style.css',
+  './js/funcoes.js',
+  './js/recursos/usuarios/login.js'
 ];
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
+      .then(cache => {
+        // Usar addAll com tratamento de erro individual para não quebrar tudo
+        // se um arquivo falhar
+        const promises = urlsToCache.map(url => {
+          return cache.add(url).catch(err => {
+            console.warn('Falha ao cachear arquivo:', url, err);
+          });
+        });
+        return Promise.all(promises);
+      })
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  // Opcional: adicione lógica de cache aqui se quiser offline
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        // Cache hit - return response
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      })
+  );
 });
