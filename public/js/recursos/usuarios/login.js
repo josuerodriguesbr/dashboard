@@ -10,7 +10,27 @@ async function verificarSessaoExistente() {
       credentials: 'same-origin'
     });
 
-    // ... (rest of logic) ...
+    console.log('Status da resposta:', response.status);
+    const text = await response.text();
+    console.log('Texto da resposta:', text);
+
+    if (!text) {
+      console.error('Resposta vazia do servidor');
+      document.getElementById('loadingMessage')?.classList.add('oculta');
+      document.getElementById('loginForm')?.classList.remove('oculta');
+      return false;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseError) {
+      console.error('Erro ao parsear JSON:', parseError);
+      console.error('Conteúdo recebido:', text.substring(0, 200) + '...');
+      document.getElementById('loadingMessage')?.classList.add('oculta');
+      document.getElementById('loginForm')?.classList.remove('oculta');
+      return false;
+    }
 
     if (data.authenticated) {
       const nivel = data.user.nivel;
@@ -23,70 +43,17 @@ async function verificarSessaoExistente() {
       };
       window.location.href = rotas[nivel] || basePath + '/';
       return true;
+    } else {
+      document.getElementById('loadingMessage')?.classList.add('oculta');
+      document.getElementById('loginForm')?.classList.remove('oculta');
+      return false;
     }
-    // ...
-  }
-}
-// ...
-const res = await fetch(`${window.BASE_PATH || ''}/login`, {
-  method: 'POST',
-  // ...
-});
-// ...
-// Registrar service worker (se suportado)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`${window.BASE_PATH || ''}/public/sw.js`)
-      .then(reg => console.log('SW registrado:', reg))
-      .catch(err => console.log('Erro no SW:', err));
-  });
-}
-
-console.log('Status da resposta:', response.status);
-const text = await response.text();
-console.log('Texto da resposta:', text);
-
-if (!text) {
-  console.error('Resposta vazia do servidor');
-  document.getElementById('loadingMessage')?.classList.add('oculta');
-  document.getElementById('loginForm')?.classList.remove('oculta');
-  return false;
-}
-
-let data;
-try {
-  data = JSON.parse(text);
-} catch (parseError) {
-  console.error('Erro ao parsear JSON:', parseError);
-  console.error('Conteúdo recebido:', text.substring(0, 200) + '...'); // Limitar a exibição
-  document.getElementById('loadingMessage')?.classList.add('oculta');
-  document.getElementById('loginForm')?.classList.remove('oculta');
-  return false;
-}
-
-if (data.authenticated) {
-  const nivel = data.user.nivel;
-  const basePath = '/projetos/dashboard';
-  const rotas = {
-    'admin': basePath + '/admin',
-    'assinante': basePath + '/assinante',
-    'operador': basePath + '/operador',
-    'vendedor': basePath + '/vendedor',
-    'cliente': basePath + '/cliente'
-  };
-  window.location.href = rotas[nivel] || basePath;
-  return true;
-} else {
-  document.getElementById('loadingMessage')?.classList.add('oculta');
-  document.getElementById('loginForm')?.classList.remove('oculta');
-  return false;
-}
   } catch (error) {
-  console.error('Erro ao verificar sessão:', error);
-  document.getElementById('loadingMessage')?.classList.add('oculta');
-  document.getElementById('loginForm')?.classList.remove('oculta');
-  return false;
-}
+    console.error('Erro ao verificar sessão:', error);
+    document.getElementById('loadingMessage')?.classList.add('oculta');
+    document.getElementById('loginForm')?.classList.remove('oculta');
+    return false;
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
