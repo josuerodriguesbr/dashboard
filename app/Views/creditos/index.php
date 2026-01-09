@@ -176,7 +176,7 @@ function gerarPix() {
     btn.disabled = true;
     btn.innerText = 'Gerando...';
 
-    fetch('/projetos/dashboard/creditos/recarga', {
+    fetch((window.BASE_PATH || '') + '/creditos/recarga', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
