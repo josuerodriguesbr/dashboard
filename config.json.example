@@ -10,7 +10,11 @@
     "user": "root",
     "password": ""
   },
-  "jwt_secret": "change_this_secret",
+  "jwt_secret": "change_this_secret_in_production",
+  "asaas": {
+    "api_key": "seu_token_de_sandbox_aqui",
+    "mode": "sandbox"
+  },
   "logging": {
     "level": "info",
     "path": "storage/logs/app.log"

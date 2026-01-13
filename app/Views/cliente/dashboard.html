@@ -1,49 +1,168 @@
 <div class="container">
     <h1>Dashboard do Cliente</h1>
     <p>Você está no dashboard de Cliente</p>
-    
+
     <div class="layout-grade">
-        <!-- Cartão de Créditos -->
+        <!-- Cartão de Créditos (Moeda e Pagamentos) -->
         <?php include ROOT . 'app/Views/recursos/cartoes/cartao-creditos.html'; ?>
-        
+
         <!-- Cartão de Convites -->
         <?php include ROOT . 'app/Views/recursos/cartoes/cartao-convidar.html'; ?>
-        
-        <!-- Outros cartões podem ser adicionados aqui -->
-        <div class="card">
+
+        <!-- Meus Produtos / Ingressos -->
+        <div class="card full-width">
             <div class="card-header">
                 <h3>
-                    <span class="card-icon">🛒</span>
-                    Minhas Compras
+                    <span class="card-icon">🎟️</span>
+                    Meus Produtos e Ingressos
                 </h3>
             </div>
             <div class="card-content">
-                <div class="saldo-destaque">
-                    <span>Em breve</span>
+                <?php if (empty($itensAdquiridos)): ?>
+                <div class="empty-state">
+                    <p>Você ainda não adquiriu produtos.</p>
+                    <a href="/creditos" class="btn-small">Ver Loja</a>
                 </div>
-                <p class="card-description">Histórico de compras e serviços</p>
-            </div>
-            <div class="card-footer">
-                <span class="card-action">Em desenvolvimento</span>
+                <?php else: ?>
+                <div class="lista-produtos">
+                    <?php foreach ($itensAdquiridos as $item): ?>
+                    <div class="item-produto">
+                        <div class="info-produto">
+                            <strong>
+                                <?= htmlspecialchars($item['recurso_nome']) ?>
+                            </strong>
+                            <span class="status-badge <?= $item['status'] ?>">
+                                <?= ucfirst($item['status']) ?>
+                            </span>
+                        </div>
+                        <div class="detalhes-produto">
+                            <span>Qtd:
+                                <?= $item['quantidade_restante'] ?>
+                            </span>
+                            <?php if ($item['data_expiracao']): ?>
+                            <span>Validade:
+                                <?= date('d/m/Y', strtotime($item['data_expiracao'])) ?>
+                            </span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
-        
-        <div class="card">
+
+        <!-- Histórico de Transações -->
+        <div class="card full-width">
             <div class="card-header">
                 <h3>
-                    <span class="card-icon">⭐</span>
-                    Avaliações
+                    <span class="card-icon">📜</span>
+                    Histórico
                 </h3>
             </div>
             <div class="card-content">
-                <div class="saldo-destaque">
-                    <span>Em breve</span>
+                <?php if (empty($transacoes)): ?>
+                <div class="empty-state">
+                    <p>Sem movimentações recentes.</p>
                 </div>
-                <p class="card-description">Avaliações e feedbacks</p>
-            </div>
-            <div class="card-footer">
-                <span class="card-action">Em desenvolvimento</span>
+                <?php else: ?>
+                <div class="lista-transacoes">
+                    <?php foreach ($transacoes as $t): ?>
+                    <div class="transacao-item">
+                        <span class="transacao-data">
+                            <?= date('d/m', strtotime($t['createdAt'])) ?>
+                        </span>
+                        <span class="transacao-desc">
+                            <?= htmlspecialchars($t['descricao']) ?>
+                        </span>
+                        <span class="transacao-valor <?= $t['valor_nominal'] >= 0 ? 'positivo' : 'negativo' ?>">
+                            <?= $t['valor_nominal'] >= 0 ? '+' : '' ?>
+                            <?= number_format($t['valor_nominal'], 2, ',', '.') ?>
+                        </span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="view-more">
+                    <a href="/creditos/historico">Ver extrato completo</a>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .full-width {
+        grid-column: 1 / -1;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 1rem;
+        color: var(--cor-texto-secundario);
+    }
+
+    .lista-produtos {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .item-produto {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border: 1px solid var(--cor-borda);
+        border-radius: 0.5rem;
+        background: var(--cor-fundo-secundario);
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 1rem;
+        background: #eee;
+    }
+
+    .status-badge.ativo {
+        background: #e6fffa;
+        color: #047857;
+    }
+
+    .transacao-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--cor-borda-suave);
+    }
+
+    .transacao-valor.positivo {
+        color: var(--cor-sucesso);
+    }
+
+    .transacao-valor.negativo {
+        color: var(--cor-erro);
+    }
+
+    .transacao-data {
+        color: var(--cor-texto-secundario);
+        font-size: 0.85rem;
+        width: 50px;
+    }
+
+    .transacao-desc {
+        flex: 1;
+        margin: 0 10px;
+    }
+
+    .view-more {
+        text-align: center;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .card-footer {
+        display: none;
+    }
+</style>

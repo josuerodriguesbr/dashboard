@@ -28,6 +28,19 @@ class Usuario
         }
     }
 
+    public static function listarPorParentId($parentId)
+    {
+        $pdo = Database::getConnection();
+        try {
+            $stmt = $pdo->prepare("SELECT id, nome, email, telefone, created_at FROM usuarios WHERE parent_id = ? ORDER BY created_at DESC");
+            $stmt->execute([$parentId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Usuario::listarPorParentId falhou: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public static function buscarPorId($id)
     {
         $pdo = Database::getConnection();
@@ -42,9 +55,9 @@ class Usuario
             ");
             $stmt->execute([$id]);
             $usuario = $stmt->fetch();
-            
+
             if ($usuario) {
-                if(class_exists('\App\Utils\UserContext')) {
+                if (class_exists('\App\Utils\UserContext')) {
                     \App\Utils\UserContext::setUsuario([
                         'id' => $usuario['id'],
                         'nome' => $usuario['nome'],
@@ -54,7 +67,7 @@ class Usuario
                     ]);
                 }
             }
-            
+
             return $usuario;
         } catch (\Exception $e) {
             error_log("Usuario::buscarPorId falhou: " . $e->getMessage());
@@ -79,7 +92,7 @@ class Usuario
     public static function cadastrar($dados)
     {
         $pdo = Database::getConnection();
-        
+
         $nome = trim($dados['nome'] ?? '');
         $email = trim($dados['email'] ?? '');
         $senha = trim($dados['senha'] ?? '');
@@ -105,9 +118,9 @@ class Usuario
                 VALUES (?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([$nome, $email, $senha_hashed, $cpf, $telefone, $parentId]);
-            
+
             $usuario_id = $pdo->lastInsertId();
-            
+
             // Criar Carteira
             $carteira = new Carteira($pdo);
             $carteira->createForUser($usuario_id);
@@ -127,21 +140,21 @@ class Usuario
     public static function atualizar($id, $dados)
     {
         $pdo = Database::getConnection();
-        
+
         try {
             if (!self::buscarPorId($id)) {
                 throw new \Exception('Usuário não encontrado.');
             }
-            
+
             $sets = [];
             $valores = [];
-            
+
             foreach ($dados as $campo => $valor) {
                 if (in_array($campo, ['nome', 'email', 'cpf', 'telefone', 'parent_id'])) {
                     $sets[] = "$campo = ?";
                     $valores[] = $valor;
                 }
-                
+
                 if ($campo === 'senha' && !empty($valor)) {
                     $sets[] = "senha = ?";
                     if (!password_get_info($valor)['algo']) {
@@ -151,17 +164,17 @@ class Usuario
                     }
                 }
             }
-            
+
             if (empty($sets)) {
                 throw new \Exception('Nenhum dado válido para atualizar.');
             }
-            
+
             $valores[] = $id;
-            
+
             $sql = "UPDATE usuarios SET " . implode(', ', $sets) . " WHERE id = ?";
             $stmt = $pdo->prepare($sql);
             return $stmt->execute($valores);
-            
+
         } catch (\Exception $e) {
             error_log("Usuario::atualizar falhou: " . $e->getMessage());
             throw $e;
@@ -183,7 +196,7 @@ class Usuario
     public static function login($email, $senha)
     {
         $pdo = Database::getConnection();
-        
+
         try {
             // Updated login query to include role info
             $stmt = $pdo->prepare("
@@ -195,14 +208,14 @@ class Usuario
             ");
             $stmt->execute([$email]);
             $usuario = $stmt->fetch();
-            
+
             if ($usuario && password_verify($senha, $usuario['senha'])) {
-                 unset($usuario['senha']);
-                 
-                 // Prefer profile role, fallback to parent_id logic
-                 $nivel = $usuario['papel_nivel'] ?? (($usuario['parent_id'] === null) ? 'admin' : 'cliente');
-                 
-                 if(class_exists('\App\Utils\UserContext')) {
+                unset($usuario['senha']);
+
+                // Prefer profile role, fallback to parent_id logic
+                $nivel = $usuario['papel_nivel'] ?? (($usuario['parent_id'] === null) ? 'admin' : 'cliente');
+
+                if (class_exists('\App\Utils\UserContext')) {
                     \App\Utils\UserContext::setUsuario([
                         'id' => $usuario['id'],
                         'nome' => $usuario['nome'],
@@ -210,9 +223,9 @@ class Usuario
                         'parent_id' => $usuario['parent_id'],
                         'papel_nivel' => $nivel
                     ]);
-                 }
+                }
 
-                 $userData = [
+                $userData = [
                     'id' => $usuario['id'],
                     'nome' => $usuario['nome'],
                     'email' => $usuario['email'],
@@ -220,9 +233,9 @@ class Usuario
                     'nivel' => $nivel,
                     'idPerfilAtivo' => $usuario['idPerfilAtivo']
                 ];
-                
+
                 $sessionData = \App\Utils\JWT::createSession($usuario['id'], $userData);
-                
+
                 if ($sessionData) {
                     return [
                         'success' => true,
@@ -232,9 +245,9 @@ class Usuario
                     ];
                 }
             }
-            
+
             return ['success' => false, 'message' => 'Credenciais inválidas'];
-            
+
         } catch (\Exception $e) {
             error_log("Usuario::login falhou: " . $e->getMessage());
             return ['success' => false, 'message' => 'Erro interno'];
@@ -246,32 +259,32 @@ class Usuario
     {
         try {
             $resultado = \App\Utils\JWT::verifySession($token);
-            
+
             if (isset($resultado['payload']['id'])) {
-                 $saldo = self::getSaldo($resultado['payload']['id']);
-                 $resultado['payload']['saldo'] = $saldo;
-                 
-                 // Buscar asaas_id fresco do banco
-                 $pdo = Database::getConnection();
-                 $stmt = $pdo->prepare("SELECT asaas_id FROM usuarios WHERE id = ?");
-                 $stmt->execute([$resultado['payload']['id']]);
-                 $extra = $stmt->fetch();
-                 if ($extra) {
-                     $resultado['payload']['asaas_id'] = $extra['asaas_id'];
-                 }
-                 
-                 // Re-hidratar context
-                 if(class_exists('\App\Utils\UserContext')) {
+                $saldo = self::getSaldo($resultado['payload']['id']);
+                $resultado['payload']['saldo'] = $saldo;
+
+                // Buscar asaas_id fresco do banco
+                $pdo = Database::getConnection();
+                $stmt = $pdo->prepare("SELECT asaas_id FROM usuarios WHERE id = ?");
+                $stmt->execute([$resultado['payload']['id']]);
+                $extra = $stmt->fetch();
+                if ($extra) {
+                    $resultado['payload']['asaas_id'] = $extra['asaas_id'];
+                }
+
+                // Re-hidratar context
+                if (class_exists('\App\Utils\UserContext')) {
                     \App\Utils\UserContext::setUsuario($resultado['payload']);
-                 }
+                }
             }
-            
+
             return ['success' => true, 'usuario' => $resultado['payload']];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
-    
+
     // ... (getSaldo kept same - uses Carteira)
     public static function getSaldo($usuarioId)
     {
@@ -279,7 +292,7 @@ class Usuario
         try {
             $carteiraModel = new Carteira($pdo);
             $carteira = $carteiraModel->getByUserId($usuarioId);
-            return $carteira ? (int)$carteira['saldo_atual'] : 0;
+            return $carteira ? (int) $carteira['saldo_atual'] : 0;
         } catch (\Exception $e) {
             error_log("Usuario::getSaldo falhou: " . $e->getMessage());
             return 0;
@@ -298,7 +311,7 @@ class Usuario
         $stmt = $pdo->prepare("UPDATE usuarios SET asaas_id = ? WHERE id = ?");
         return $stmt->execute([$asaasId, $usuarioId]);
     }
-    
+
     // RESTORED METHODS FOR PROFILES
 
     public static function getPerfilAtivo($usuarioId)
@@ -337,7 +350,7 @@ class Usuario
             return false;
         }
     }
-    
+
     // Added hash generation util
     public static function gerarHash()
     {

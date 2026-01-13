@@ -11,25 +11,32 @@ class Database
     {
         if (self::$instance === null) {
 
-            /*
-            $dsn = "mysql:host=localhost;dbname=u748224509_bingosys;charset=utf8mb4";
-            $usuario = "u748224509_bingosys";
-            $senha = "bingosys2020";
-            */
-            
-            $dsn = "mysql:host=localhost;dbname=dashboard;charset=utf8mb4";
-            $usuario = "root";
-            $senha = "";
+            // Tenta ler do config.json
+            $configFile = ROOT . 'config.json';
+            $config = [];
 
-            // Detecção de ambiente VPS (Produção)
-            if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'vendasys.com.br') !== false) {
-                $dsn = "mysql:host=localhost;dbname=vendasys;charset=utf8mb4";
-                $usuario = "josuerodrigues";
-                $senha = "RootJRP@2026";
+            if (file_exists($configFile)) {
+                $config = json_decode(file_get_contents($configFile), true);
             }
 
+            // Padrões se não houver config (dev local seguro)
+            $dbConfig = $config['database'] ?? [
+                'host' => 'localhost',
+                'name' => 'dashboard_db',
+                'user' => 'root',
+                'password' => ''
+            ];
+
+            // Detecção de ambiente via config ou fallback
+            // (A detecção automática baseada em HTTP_HOST foi removida em favor do config.json)
+
             try {
-                self::$instance = new \PDO($dsn, $usuario, $senha, [
+                $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['name']};charset=utf8mb4";
+                if (isset($dbConfig['port'])) {
+                    $dsn .= ";port={$dbConfig['port']}";
+                }
+
+                self::$instance = new \PDO($dsn, $dbConfig['user'], $dbConfig['password'], [
                     \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
                     \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
                     \PDO::ATTR_EMULATE_PREPARES => false
@@ -44,7 +51,7 @@ class Database
         return self::$instance;
     }
 
-// Dentro de Database.php
+    // Dentro de Database.php
 
     private static function getConfig()
     {
@@ -59,5 +66,5 @@ class Database
             'user' => $user,
             'pass' => $pass
         ];
-    }    
+    }
 }

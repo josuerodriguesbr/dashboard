@@ -12,6 +12,7 @@ materiais/
 # Arquivos de ambiente
 .env
 .env.local
+config.json
 
 # Logs e cache
 *.log

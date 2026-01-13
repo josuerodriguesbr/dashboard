@@ -1,49 +1,150 @@
 <div class="container">
     <h1>Dashboard do Vendedor</h1>
     <p>Você está no dashboard de Vendedor</p>
-    
+
     <div class="layout-grade">
-        <!-- Cartão de Créditos -->
+        <!-- Cartão de Créditos (Sempre visível pois é a moeda da plataforma) -->
         <?php include ROOT . 'app/Views/recursos/cartoes/cartao-creditos.html'; ?>
-        
+
         <!-- Cartão de Convites -->
         <?php include ROOT . 'app/Views/recursos/cartoes/cartao-convidar.html'; ?>
-        
-        <!-- Outros cartões podem ser adicionados aqui -->
-        <div class="card">
+
+        <!-- Meus Clientes -->
+        <div class="card full-width">
             <div class="card-header">
                 <h3>
-                    <span class="card-icon">📊</span>
-                    Relatórios
+                    <span class="card-icon">👥</span>
+                    Meus Clientes Recentes
                 </h3>
             </div>
             <div class="card-content">
-                <div class="saldo-destaque">
-                    <span>Em breve</span>
+                <?php if (empty($clientes)): ?>
+                <div class="empty-state">
+                    <p>Você ainda não possui clientes.</p>
+                    <p class="small">Use o cartão de convites para trazer novos usuários!</p>
                 </div>
-                <p class="card-description">Acesso a relatórios e estatísticas</p>
-            </div>
-            <div class="card-footer">
-                <span class="card-action">Em desenvolvimento</span>
+                <?php else: ?>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Data Cadastro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach (array_slice($clientes, 0, 5) as $cliente): ?>
+                            <tr>
+                                <td>
+                                    <?= htmlspecialchars($cliente['nome']) ?>
+                                </td>
+                                <td>
+                                    <?= htmlspecialchars($cliente['email']) ?>
+                                </td>
+                                <td>
+                                    <?= date('d/m/Y', strtotime($cliente['created_at'])) ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php if (count($clientes) > 5): ?>
+                <div class="view-more">
+                    <a href="/vendedor/clientes">Ver todos</a>
+                </div>
+                <?php endif; ?>
+                <?php endif; ?>
             </div>
         </div>
-        
-        <div class="card">
+
+        <!-- Histórico e Comissões -->
+        <div class="card full-width">
             <div class="card-header">
                 <h3>
-                    <span class="card-icon">🛒</span>
-                    Vendas
+                    <span class="card-icon">📜</span>
+                    Últimas Movimentações
                 </h3>
             </div>
             <div class="card-content">
-                <div class="saldo-destaque">
-                    <span>Em breve</span>
+                <?php if (empty($transacoes)): ?>
+                <div class="empty-state">
+                    <p>Nenhuma movimentação recente.</p>
                 </div>
-                <p class="card-description">Controle de vendas e comissões</p>
-            </div>
-            <div class="card-footer">
-                <span class="card-action">Em desenvolvimento</span>
+                <?php else: ?>
+                <div class="lista-transacoes">
+                    <?php foreach ($transacoes as $t): ?>
+                    <div class="transacao-item">
+                        <span class="transacao-data">
+                            <?= date('d/m H:i', strtotime($t['createdAt'])) ?>
+                        </span>
+                        <span class="transacao-desc">
+                            <?= htmlspecialchars($t['descricao']) ?>
+                        </span>
+                        <span class="transacao-valor <?= $t['valor_nominal'] >= 0 ? 'positivo' : 'negativo' ?>">
+                            <?= $t['valor_nominal'] >= 0 ? '+' : '' ?>
+                            <?= number_format($t['valor_nominal'], 2, ',', '.') ?>
+                        </span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .full-width {
+        grid-column: 1 / -1;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 1rem;
+        color: var(--cor-texto-secundario);
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--cor-borda);
+    }
+
+    .transacao-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--cor-borda-suave);
+    }
+
+    .transacao-valor.positivo {
+        color: var(--cor-sucesso);
+    }
+
+    .transacao-valor.negativo {
+        color: var(--cor-erro);
+    }
+
+    .transacao-data {
+        color: var(--cor-texto-secundario);
+        font-size: 0.85rem;
+        width: 80px;
+    }
+
+    .transacao-desc {
+        flex: 1;
+        margin: 0 10px;
+    }
+</style>

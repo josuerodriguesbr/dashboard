@@ -3,47 +3,127 @@
     <p>Você está no dashboard de Assinante</p>
     
     <div class="layout-grade">
-        <!-- Cartão de Créditos -->
+        <!-- Cartão de Créditos (Sempre visível pois é a moeda da plataforma) -->
         <?php include ROOT . 'app/Views/recursos/cartoes/cartao-creditos.html'; ?>
         
         <!-- Cartão de Convites -->
         <?php include ROOT . 'app/Views/recursos/cartoes/cartao-convidar.html'; ?>
         
-        <!-- Outros cartões podem ser adicionados aqui -->
-        <div class="card">
+        <!-- Meus Serviços / Planos -->
+        <div class="card full-width">
             <div class="card-header">
                 <h3>
-                    <span class="card-icon">📊</span>
-                    Relatórios
+                    <span class="card-icon">📦</span>
+                    Meus Serviços Ativos
                 </h3>
             </div>
             <div class="card-content">
-                <div class="saldo-destaque">
-                    <span>Em breve</span>
-                </div>
-                <p class="card-description">Acesso a relatórios e estatísticas</p>
-            </div>
-            <div class="card-footer">
-                <span class="card-action">Em desenvolvimento</span>
+                <?php if (empty($itensAdquiridos)): ?>
+                    <div class="empty-state">
+                        <p>Você ainda não possui serviços ativos.</p>
+                        <a href="/creditos" class="btn-small">Adquirir Serviços</a>
+                    </div>
+                <?php else: ?>
+                    <div class="lista-servicos">
+                        <?php foreach ($itensAdquiridos as $item): ?>
+                            <div class="item-servico">
+                                <div class="info-servico">
+                                    <strong><?= htmlspecialchars($item['recurso_nome']) ?></strong>
+                                    <span class="status-badge <?= $item['status'] ?>"><?= ucfirst($item['status']) ?></span>
+                                </div>
+                                <div class="detalhes-servico">
+                                    <span>Restante: <?= $item['quantidade_restante'] ?></span>
+                                    <?php if ($item['data_expiracao']): ?>
+                                        <span>Expira em: <?= date('d/m/Y', strtotime($item['data_expiracao'])) ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
-        
+
+        <!-- Acesso Rápido -->
         <div class="card">
             <div class="card-header">
                 <h3>
-                    <span class="card-icon">👥</span>
-                    Meus Usuários
+                    <span class="card-icon">⚡</span>
+                    Acesso Rápido
                 </h3>
             </div>
-            <div class="card-content">
-                <div class="saldo-destaque">
-                    <span>Em breve</span>
-                </div>
-                <p class="card-description">Gerenciamento de usuários vinculados</p>
-            </div>
-            <div class="card-footer">
-                <span class="card-action">Em desenvolvimento</span>
+            <div class="card-content action-list">
+                <a href="/creditos" class="action-item">
+                    <span class="icon">➕</span> Comprar Créditos
+                </a>
+                <a href="/perfil" class="action-item">
+                    <span class="icon">👤</span> Meu Perfil
+                </a>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 1rem;
+        color: var(--cor-texto-secundario);
+    }
+    
+    .lista-servicos {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .item-servico {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border: 1px solid var(--cor-borda);
+        border-radius: 0.5rem;
+        background: var(--cor-fundo-secundario);
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 1rem;
+        background: #eee;
+        color: #333;
+    }
+    .status-badge.ativo {
+        background: #e6fffa;
+        color: #047857;
+    }
+    
+    .action-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .action-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        background: var(--cor-fundo-secundario);
+        color: var(--cor-texto);
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+    .action-item:hover {
+        background: var(--cor-borda);
+    }
+    .card-footer {
+        display: none; /* Escondendo footers vazios */
+    }
+</style>
